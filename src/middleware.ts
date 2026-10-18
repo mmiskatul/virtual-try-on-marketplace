@@ -34,20 +34,121 @@ function createContentSecurityPolicy(nonce: string) {
     .trim();
 }
 
+// --- Strict Edge CORS Configuration ---
+const ALLOWED_ORIGIN_PATTERNS = [
+  /^https?:\/\/localhost(:\d+)?$/,
+  /^https?:\/\/127\.0\.0\.1(:\d+)?$/,
+  /^https:\/\/([a-z0-9-]+\.)?vton-platform\.io$/,
+];
+
+function isOriginAllowed(origin: string | null): boolean {
+  if (!origin) return true; // Server-to-server or same-origin
+  return ALLOWED_ORIGIN_PATTERNS.some((p) => p.test(origin));
+}
+
+// --- Edge Sliding-Window Rate Limiting ---
+interface RateLimitRecord {
+  count: number;
+  resetAt: number;
+}
+
+const rateLimitStore = new Map<string, RateLimitRecord>();
+let lastCleanup = Date.now();
+
+function checkEdgeRateLimit(
+  clientIp: string,
+  pathname: string
+): { success: boolean; limit: number; remaining: number; reset: number } {
+  const now = Date.now();
+  if (now - lastCleanup > 300000) {
+    lastCleanup = now;
+    for (const [k, v] of rateLimitStore.entries()) {
+      if (v.resetAt <= now) rateLimitStore.delete(k);
+    }
+  }
+
+  const isSensitive = pathname.startsWith('/api/checkout') || pathname.startsWith('/api/auth');
+  const limit = isSensitive ? 30 : 120;
+  const windowMs = 60000;
+
+  const key = `${clientIp}:${isSensitive ? 'sensitive' : 'standard'}`;
+  let record = rateLimitStore.get(key);
+
+  if (!record || record.resetAt <= now) {
+    record = { count: 1, resetAt: now + windowMs };
+    rateLimitStore.set(key, record);
+    return { success: true, limit, remaining: limit - 1, reset: Math.ceil((record.resetAt - now) / 1000) };
+  }
+
+  record.count += 1;
+  const remaining = Math.max(0, limit - record.count);
+  const reset = Math.ceil((record.resetAt - now) / 1000);
+
+  if (record.count > limit) {
+    return { success: false, limit, remaining: 0, reset };
+  }
+
+  return { success: true, limit, remaining, reset };
+}
+
 /**
- * Edge Runtime Middleware with Token Verification & Cryptographic CSP Nonce Injection
- * 1. Generates a unique, cryptographically random nonce per request.
- * 2. Injects Content Security Policy (CSP) headers into both request and response.
- * 3. Enforces edge token verification on protected routes.
+ * Edge Runtime Middleware with Token Verification, Strict CORS & Edge Rate Limiting
  */
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
+  const origin = request.headers.get('origin');
+  const clientIp = request.ip || request.headers.get('x-forwarded-for')?.split(',')[0].trim() || '127.0.0.1';
 
-  // 1. Generate Cryptographic Nonce using Web Crypto
+  // 1. Edge-Level Strict CORS Preflight & Origin Verification
+  if (pathname.startsWith('/api/')) {
+    if (origin && !isOriginAllowed(origin)) {
+      return NextResponse.json(
+        { error: 'Forbidden', message: 'Cross-origin request blocked by Edge CORS policy' },
+        { status: 403 }
+      );
+    }
+
+    if (request.method === 'OPTIONS') {
+      return new NextResponse(null, {
+        status: 204,
+        headers: {
+          'Access-Control-Allow-Origin': origin || '*',
+          'Access-Control-Allow-Methods': 'GET, POST, PUT, PATCH, DELETE, OPTIONS',
+          'Access-Control-Allow-Headers': 'Content-Type, Authorization, x-tenant-id, x-client-version',
+          'Access-Control-Allow-Credentials': 'true',
+          'Access-Control-Max-Age': '86400',
+        },
+      });
+    }
+  }
+
+  // 2. Edge-Level Sliding-Window Rate Limiting
+  const rateLimit = checkEdgeRateLimit(clientIp, pathname);
+  if (!rateLimit.success) {
+    return NextResponse.json(
+      {
+        error: 'TooManyRequests',
+        code: 'EDGE_RATE_LIMIT_EXCEEDED',
+        message: `Too many requests from this client. Please retry after ${rateLimit.reset} seconds.`,
+        retryAfter: rateLimit.reset,
+      },
+      {
+        status: 429,
+        headers: {
+          'Retry-After': String(rateLimit.reset),
+          'X-RateLimit-Limit': String(rateLimit.limit),
+          'X-RateLimit-Remaining': '0',
+          'X-RateLimit-Reset': String(rateLimit.reset),
+        },
+      }
+    );
+  }
+
+  // 3. Generate Cryptographic Nonce using Web Crypto
   const nonce = btoa(crypto.randomUUID());
   const cspHeader = createContentSecurityPolicy(nonce);
 
-  // 2. Edge Token & Session Verification using NextAuth JWT
+  // 4. Edge Token & Session Verification using NextAuth JWT
   const token = await getToken({
     req: request,
     secret: process.env.NEXTAUTH_SECRET || 'vton-marketplace-fallback-secret-key-32chars',
@@ -55,7 +156,7 @@ export async function middleware(request: NextRequest) {
 
   const isProtectedRoute = PROTECTED_ROUTES.some((route) => pathname.startsWith(route));
 
-  // 3. Block unauthorized requests immediately at the routing edge
+  // 5. Block unauthorized requests immediately at the routing edge
   if (isProtectedRoute && !token) {
     if (pathname.startsWith('/api/')) {
       return NextResponse.json(
@@ -112,6 +213,17 @@ export async function middleware(request: NextRequest) {
   const geoCity = request.geo?.city || request.headers.get('x-vercel-ip-city') || 'Edge';
   response.headers.set('x-edge-geo', `${geoCity}, ${geoCountry}`);
   response.headers.set('x-edge-runtime', 'vercel-edge-v8');
+
+  // Rate Limiting headers
+  response.headers.set('X-RateLimit-Limit', String(rateLimit.limit));
+  response.headers.set('X-RateLimit-Remaining', String(rateLimit.remaining));
+  response.headers.set('X-RateLimit-Reset', String(rateLimit.reset));
+
+  // Strict CORS headers for allowed origins
+  if (origin && isOriginAllowed(origin)) {
+    response.headers.set('Access-Control-Allow-Origin', origin);
+    response.headers.set('Access-Control-Allow-Credentials', 'true');
+  }
 
   return response;
 }
