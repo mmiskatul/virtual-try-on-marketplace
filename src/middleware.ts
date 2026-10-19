@@ -62,9 +62,9 @@ function checkEdgeRateLimit(
   const now = Date.now();
   if (now - lastCleanup > 300000) {
     lastCleanup = now;
-    for (const [k, v] of rateLimitStore.entries()) {
+    rateLimitStore.forEach((v, k) => {
       if (v.resetAt <= now) rateLimitStore.delete(k);
-    }
+    });
   }
 
   const isSensitive = pathname.startsWith('/api/checkout') || pathname.startsWith('/api/auth');
