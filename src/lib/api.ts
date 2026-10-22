@@ -1,9 +1,9 @@
 /**
  * Production API Client for Central Fashion Marketplace
- * Handles communication with marketplace-api (:4002) and ai-service (:8000)
+ * Handles communication with backend-api (:4000) and ai-service (:8000)
  */
 
-const MARKETPLACE_API_URL = process.env.NEXT_PUBLIC_MARKETPLACE_API_URL || 'http://localhost:4002';
+const MARKETPLACE_API_URL = process.env.NEXT_PUBLIC_MARKETPLACE_API_URL || 'http://localhost:4000';
 const AI_SERVICE_URL = process.env.NEXT_PUBLIC_AI_SERVICE_URL || 'http://localhost:8000';
 
 export class ApiError extends Error {
@@ -73,10 +73,10 @@ export const marketplaceApi = {
     );
   },
 
-  // Dispatch Virtual Try-On
-  submitTryOn: (payload: { personImage: string; garmentImage: string; category?: string }) => {
-    return request<{ jobId: string; status: string; queuePosition: number }>(
-      `${AI_SERVICE_URL}/api/v1/try-on/jobs`,
+  // Dispatch Virtual Try-On via Unified Backend (orchestrates AI generation & Cloudinary CDN persistence)
+  submitTryOn: (payload: { personImage: string; garmentImage: string; category?: string; prompt?: string }) => {
+    return request<{ jobId: string; status: string; queuePosition?: number }>(
+      `${MARKETPLACE_API_URL}/api/v1/try-on/submit`,
       {
         method: 'POST',
         body: JSON.stringify(payload)
@@ -84,10 +84,10 @@ export const marketplaceApi = {
     );
   },
 
-  // Poll Virtual Try-On Result
+  // Poll Virtual Try-On Result (Backend receives AI output and persists result on Cloudinary CDN)
   getTryOnStatus: (jobId: string) => {
-    return request<{ jobId: string; status: 'QUEUED' | 'PROCESSING' | 'COMPLETED' | 'FAILED'; resultUrl?: string }>(
-      `${AI_SERVICE_URL}/api/v1/try-on/jobs/${jobId}`
+    return request<{ jobId: string; status: string; resultUrl?: string; output_url?: string; storageProvider?: string }>(
+      `${MARKETPLACE_API_URL}/api/v1/try-on/status/${jobId}`
     );
   }
 };

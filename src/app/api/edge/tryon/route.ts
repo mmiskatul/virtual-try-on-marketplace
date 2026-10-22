@@ -24,34 +24,35 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const aiServiceUrl = process.env.NEXT_PUBLIC_AI_SERVICE_URL || 'http://localhost:8000';
-    let jobResult = null;
+    const backendUrl = process.env.NEXT_PUBLIC_MARKETPLACE_API_URL || 'http://localhost:4000';
+    let jobResult: any = null;
 
     try {
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 4000);
+      const timeoutId = setTimeout(() => controller.abort(), 15000);
 
-      const aiResponse = await fetch(`${aiServiceUrl}/api/v1/tryon/jobs`, {
+      // Route through backend: triggers AI generation and automatic Cloudinary upload
+      const backendResponse = await fetch(`${backendUrl}/api/v1/try-on/direct`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'x-edge-client-ip': request.headers.get('x-forwarded-for') || '',
         },
         body: JSON.stringify({
-          user_image_url: userImageUrl,
-          garment_image_url: garmentImageUrl,
-          category: clothType || 'upper_body',
-          brand_slug: brandSlug || 'generic',
+          personImage: userImageUrl,
+          garmentImage: garmentImageUrl,
+          category: clothType || 'tops',
+          tenantId: brandSlug || 'generic',
         }),
         signal: controller.signal,
       });
       clearTimeout(timeoutId);
 
-      if (aiResponse.ok) {
-        jobResult = await aiResponse.json();
+      if (backendResponse.ok) {
+        jobResult = await backendResponse.json();
       }
     } catch {
-      // Graceful fallback simulation if local AI microservice is sleeping
+      // Graceful fallback simulation if backend is warming up
     }
 
     const durationMs = Date.now() - startTime;
@@ -65,6 +66,8 @@ export async function POST(request: NextRequest) {
         clothType: clothType || 'upper_body',
         outputImageUrl:
           jobResult?.output_image_url ||
+          jobResult?.resultUrl ||
+          jobResult?.result?.output_url ||
           'https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?w=800&auto=format&fit=crop&q=80',
         edgeTelemetry: {
           dispatchedAtEdge: true,

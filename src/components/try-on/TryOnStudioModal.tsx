@@ -1,36 +1,71 @@
 'use client';
 
-import React from 'react';
+import React, { useRef } from 'react';
 import Image from 'next/image';
-import { Sparkles, Upload, X, ShoppingBag } from 'lucide-react';
+import { Sparkles, Upload, X, ShoppingBag, CheckCircle, RefreshCw } from 'lucide-react';
 import { MarketplaceProduct } from '../../types';
 
 interface TryOnStudioModalProps {
   product: MarketplaceProduct | null;
   phase: 'upload' | 'processing' | 'result';
   resultImg: string;
+  userPhoto?: string | null;
   onClose: () => void;
   onStartSynthesis: () => void;
-  onSelectPreset: (presetKey: string) => void;
+  onSelectPreset: (presetUrl: string) => void;
+  onUploadPhoto?: (photo: string) => void;
   onResetPhase: () => void;
   onAddToCart: (product: MarketplaceProduct) => void;
 }
+
+const PRESET_MODELS = [
+  {
+    id: 'preset_female',
+    name: 'Female Portrait Model',
+    url: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=600&auto=format&fit=crop&q=80',
+    thumb: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=120&auto=format&fit=crop&q=80',
+  },
+  {
+    id: 'preset_male',
+    name: 'Male Studio Model',
+    url: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=600&auto=format&fit=crop&q=80',
+    thumb: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=120&auto=format&fit=crop&q=80',
+  }
+];
 
 export function TryOnStudioModal({
   product,
   phase,
   resultImg,
+  userPhoto,
   onClose,
   onStartSynthesis,
   onSelectPreset,
+  onUploadPhoto,
   onResetPhase,
   onAddToCart
 }: TryOnStudioModalProps) {
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
   if (!product) return null;
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = () => {
+      const result = reader.result as string;
+      if (onUploadPhoto) {
+        onUploadPhoto(result);
+      }
+    };
+    reader.readAsDataURL(file);
+  };
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/85 backdrop-blur-md">
-      <div className="fashion-glass w-full max-w-xl p-6 rounded-3xl border border-purple-500/30 shadow-2xl space-y-6 relative">
+      <div className="fashion-glass w-full max-w-xl p-6 rounded-3xl border border-purple-500/30 shadow-2xl space-y-6 relative max-h-[90vh] overflow-y-auto">
         <button
           onClick={onClose}
           className="absolute top-5 right-5 text-slate-400 hover:text-white p-1 rounded-full hover:bg-slate-800 transition-colors"
@@ -67,32 +102,82 @@ export function TryOnStudioModal({
         {/* Phase 1: Upload / Choose Preset */}
         {phase === 'upload' && (
           <div className="space-y-4">
-            <div className="border-2 border-dashed border-purple-500/40 hover:border-purple-500 rounded-2xl p-6 text-center space-y-3 cursor-pointer bg-purple-950/10 transition-colors">
-              <Upload className="w-8 h-8 text-purple-400 mx-auto" />
-              <div>
-                <p className="font-bold text-xs text-white">Upload Your Standing or Portrait Photograph</p>
-                <p className="text-[11px] text-slate-400 mt-1">Best results: neutral pose, plain background, full upper body visible</p>
+            <input
+              type="file"
+              ref={fileInputRef}
+              accept="image/*"
+              className="hidden"
+              onChange={handleFileChange}
+            />
+
+            {userPhoto ? (
+              <div className="p-4 rounded-2xl bg-purple-950/20 border border-purple-500/40 flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="relative w-12 h-16 rounded-xl overflow-hidden ring-1 ring-purple-400/50 bg-slate-900">
+                    <Image
+                      src={userPhoto}
+                      alt="Selected user photo"
+                      fill
+                      className="object-cover"
+                    />
+                  </div>
+                  <div>
+                    <div className="flex items-center gap-1.5 text-emerald-400 text-xs font-bold">
+                      <CheckCircle className="w-3.5 h-3.5" /> Photo Selected
+                    </div>
+                    <p className="text-[11px] text-slate-400">Ready for neural fitting synthesis</p>
+                  </div>
+                </div>
+
+                <button
+                  onClick={() => fileInputRef.current?.click()}
+                  className="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-white text-xs font-semibold flex items-center gap-1 transition-colors"
+                >
+                  <RefreshCw className="w-3 h-3" /> Change
+                </button>
               </div>
-            </div>
+            ) : (
+              <div
+                onClick={() => fileInputRef.current?.click()}
+                className="border-2 border-dashed border-purple-500/40 hover:border-purple-500 rounded-2xl p-6 text-center space-y-3 cursor-pointer bg-purple-950/10 transition-colors"
+              >
+                <Upload className="w-8 h-8 text-purple-400 mx-auto" />
+                <div>
+                  <p className="font-bold text-xs text-white">Upload Your Standing or Portrait Photograph</p>
+                  <p className="text-[11px] text-slate-400 mt-1">Best results: neutral pose, plain background, full upper body visible</p>
+                </div>
+              </div>
+            )}
 
             <div className="text-center">
-              <span className="text-slate-500 text-xs font-semibold">Or use high-resolution model preset:</span>
+              <span className="text-slate-500 text-xs font-semibold">Or pick a high-resolution model preset:</span>
             </div>
 
-            <div className="flex gap-3 justify-center">
-              <button
-                onClick={() => onSelectPreset('preset_female')}
-                className="p-2 rounded-xl border border-purple-500 bg-purple-950/30 flex items-center gap-2 text-xs font-bold text-purple-300 hover:bg-purple-900/40 transition-colors"
-              >
-                <Image
-                  src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&auto=format&fit=crop&q=80"
-                  alt="Preset Portrait Model"
-                  width={32}
-                  height={32}
-                  className="w-8 h-8 rounded-lg object-cover"
-                />
-                Preset Portrait Model
-              </button>
+            <div className="grid grid-cols-2 gap-3">
+              {PRESET_MODELS.map((preset) => {
+                const isSelected = userPhoto === preset.url;
+                return (
+                  <button
+                    key={preset.id}
+                    onClick={() => onSelectPreset(preset.url)}
+                    className={`p-2.5 rounded-xl border flex items-center gap-2.5 text-xs font-bold transition-all text-left ${
+                      isSelected
+                        ? 'border-purple-400 bg-purple-900/40 text-purple-200 ring-2 ring-purple-500/30'
+                        : 'border-slate-800 bg-slate-900/70 text-slate-300 hover:border-purple-500/50 hover:bg-purple-950/20'
+                    }`}
+                  >
+                    <div className="relative w-9 h-9 rounded-lg overflow-hidden shrink-0">
+                      <Image
+                        src={preset.thumb}
+                        alt={preset.name}
+                        fill
+                        className="object-cover"
+                      />
+                    </div>
+                    <span className="truncate">{preset.name}</span>
+                  </button>
+                );
+              })}
             </div>
 
             <button
