@@ -91,7 +91,6 @@ const SERVER_SECRETS_TO_PROTECT: Array<[string | undefined, string]> = [
   [process.env.NEXTAUTH_SECRET, 'NEXTAUTH_SECRET'],
   [process.env.GOOGLE_CLIENT_SECRET, 'GOOGLE_CLIENT_SECRET'],
   [process.env.GITHUB_SECRET, 'GITHUB_SECRET'],
-  [process.env.INTERNAL_SERVICE_KEY, 'INTERNAL_SERVICE_KEY'],
   [process.env.DATABASE_URL, 'DATABASE_URL'],
   [process.env.AI_ENGINE_KEY, 'AI_ENGINE_KEY'],
   [process.env.MARKETPLACE_API_KEY, 'MARKETPLACE_API_KEY'],
