@@ -96,6 +96,9 @@ function checkEdgeRateLimit(
  */
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
+  if (pathname === '/forget-password') {
+    return NextResponse.redirect(new URL('/forgot-password', request.url));
+  }
   const origin = request.headers.get('origin');
   const clientIp = request.ip || request.headers.get('x-forwarded-for')?.split(',')[0].trim() || '127.0.0.1';
 
@@ -175,8 +178,7 @@ export async function middleware(request: NextRequest) {
       );
     }
 
-    const loginUrl = new URL('/', request.url);
-    loginUrl.searchParams.set('auth', 'required');
+    const loginUrl = new URL('/login', request.url);
     loginUrl.searchParams.set('callbackUrl', pathname);
     return NextResponse.redirect(loginUrl);
   }

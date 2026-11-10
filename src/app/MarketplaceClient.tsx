@@ -2,6 +2,7 @@
 
 import React from 'react';
 import { useQuery } from '@tanstack/react-query';
+import { useSession } from 'next-auth/react';
 import { Navbar } from '../components/layout/Navbar';
 import { BrandPartners } from '../components/modules/BrandPartners';
 import { ProductGrid } from '../components/modules/ProductGrid';
@@ -15,6 +16,7 @@ import { useTryOnStore } from '../stores/useTryOnStore';
 import { useOptimisticCatalog } from '../hooks/useOptimisticCatalog';
 
 export function MarketplaceClient() {
+  const { data: session } = useSession();
   const { isWishlisted, toggleWishlist, isSyncing } = useOptimisticCatalog();
 
   // Zustand Client State
@@ -119,7 +121,9 @@ export function MarketplaceClient() {
     confirmOrder(orderId);
   };
 
-  const customer = { name: 'Sarah Miller', email: 'sarah.miller@example.com' };
+  const customer = session?.user
+    ? { name: session.user.name || 'Customer', email: session.user.email || '' }
+    : { name: 'Sarah Miller', email: 'sarah.miller@example.com' };
 
   return (
     <div className="flex-1 flex flex-col">

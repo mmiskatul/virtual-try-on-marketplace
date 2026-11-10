@@ -6,6 +6,12 @@
 const MARKETPLACE_API_URL = process.env.NEXT_PUBLIC_MARKETPLACE_API_URL || 'http://localhost:4000';
 const AI_SERVICE_URL = process.env.NEXT_PUBLIC_AI_SERVICE_URL || 'http://localhost:8000';
 
+export interface DevEmailPreview {
+  actionUrl?: string;
+  otpCode?: string;
+  expiresInMinutes?: number;
+}
+
 export class ApiError extends Error {
   constructor(public status: number, message: string, public data?: any) {
     super(message);
@@ -17,6 +23,13 @@ async function request<T>(url: string, options: RequestInit = {}): Promise<T> {
   const headers = new Headers(options.headers || {});
   if (!headers.has('Content-Type') && !(options.body instanceof FormData)) {
     headers.set('Content-Type', 'application/json');
+  }
+
+  if (typeof window !== 'undefined') {
+    const token = localStorage.getItem('marketplace_token');
+    if (token && !headers.has('Authorization')) {
+      headers.set('Authorization', `Bearer ${token}`);
+    }
   }
 
   const response = await fetch(url, {
@@ -38,6 +51,81 @@ async function request<T>(url: string, options: RequestInit = {}): Promise<T> {
 }
 
 export const marketplaceApi = {
+  // Authentication & Account Recovery
+  auth: {
+    register: (payload: { name: string; email: string; password: string }) => {
+      return request<{
+        message: string;
+        requiresEmailVerification: boolean;
+        user: { id: string; name: string; email: string; role: string; emailVerified: boolean };
+        devPreview?: DevEmailPreview;
+      }>(`${MARKETPLACE_API_URL}/api/v1/marketplace/auth/register`, {
+        method: 'POST',
+        body: JSON.stringify(payload)
+      });
+    },
+
+    login: (payload: { email: string; password: string }) => {
+      return request<{
+        message: string;
+        token: string;
+        user: { id: string; name: string; email: string; role: string; emailVerified: boolean };
+      }>(`${MARKETPLACE_API_URL}/api/v1/marketplace/auth/login`, {
+        method: 'POST',
+        body: JSON.stringify(payload)
+      });
+    },
+
+    verifyEmail: (payload: { token?: string; email?: string; code?: string }) => {
+      return request<{
+        message: string;
+        user: { id: string; name: string; email: string; role: string; emailVerified: boolean };
+      }>(`${MARKETPLACE_API_URL}/api/v1/marketplace/auth/verify-email`, {
+        method: 'POST',
+        body: JSON.stringify(payload)
+      });
+    },
+
+    resendVerification: (email: string) => {
+      return request<{
+        message: string;
+        alreadyVerified?: boolean;
+        devPreview?: DevEmailPreview;
+      }>(`${MARKETPLACE_API_URL}/api/v1/marketplace/auth/resend-verification`, {
+        method: 'POST',
+        body: JSON.stringify({ email, portal: 'marketplace' })
+      });
+    },
+
+    forgotPassword: (email: string) => {
+      return request<{
+        message: string;
+        devPreview?: DevEmailPreview;
+      }>(`${MARKETPLACE_API_URL}/api/v1/marketplace/auth/forgot-password`, {
+        method: 'POST',
+        body: JSON.stringify({ email, portal: 'marketplace' })
+      });
+    },
+
+    verifyResetToken: (payload: { token?: string; email?: string; code?: string }) => {
+      return request<{
+        valid: boolean;
+        email: string;
+        expiresAt: number;
+      }>(`${MARKETPLACE_API_URL}/api/v1/marketplace/auth/verify-reset-token`, {
+        method: 'POST',
+        body: JSON.stringify(payload)
+      });
+    },
+
+    resetPassword: (payload: { token?: string; email?: string; code?: string; newPassword: string }) => {
+      return request<{ message: string }>(`${MARKETPLACE_API_URL}/api/v1/marketplace/auth/reset-password`, {
+        method: 'POST',
+        body: JSON.stringify({ ...payload, portal: 'marketplace' })
+      });
+    },
+  },
+
   // Products Discovery
   getProducts: (params?: { category?: string; brand?: string; q?: string }) => {
     const query = new URLSearchParams();
