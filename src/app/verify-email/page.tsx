@@ -3,10 +3,10 @@
 import React, { Suspense, useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { signIn } from 'next-auth/react';
+import { signIn, getSession } from 'next-auth/react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { CheckCircle2, AlertCircle, Loader2, Mail, ShieldCheck, ArrowRight, Lock, X } from 'lucide-react';
+import { CheckCircle2, AlertCircle, Loader2, Mail, ArrowRight, Lock, X } from 'lucide-react';
 import { verifyEmailSchema, VerifyEmailFormValues } from '../../lib/schemas';
 import { marketplaceApi } from '../../lib/api';
 import { AuthShell } from '../../components/auth/AuthShell';
@@ -76,18 +76,33 @@ function VerifyEmailContent() {
         // ignore
       }
     }
-    if (!token) return;
+    if (!token) {
+      router.replace(callbackUrl);
+      router.refresh();
+      return;
+    }
     if (typeof window !== 'undefined') {
       localStorage.setItem('marketplace_token', token);
     }
-    await signIn('credentials', {
+    const signInResult = await signIn('credentials', {
       redirect: false,
       verifiedToken: token,
     });
+    if (signInResult?.error) {
+      setStatus('error');
+      setMessage('Email verified, but automatic sign-in failed. Please log in to continue.');
+      return;
+    }
+    await getSession();
+    setStatus('verified');
     setTimeout(() => {
-      router.push(callbackUrl);
-      router.refresh();
-    }, 800);
+      if (typeof window !== 'undefined') {
+        window.location.assign(callbackUrl);
+      } else {
+        router.replace(callbackUrl);
+        router.refresh();
+      }
+    }, 500);
   };
 
   useEffect(() => {
@@ -98,7 +113,6 @@ function VerifyEmailContent() {
     marketplaceApi.auth
       .verifyEmail({ token: urlToken })
       .then(async (res) => {
-        setStatus('verified');
         setMessage(res.message);
         await completeAutoSignIn(res.token, res.user?.email || urlEmail);
       })
@@ -111,12 +125,12 @@ function VerifyEmailContent() {
   const onSubmitCode = async (data: VerifyEmailFormValues) => {
     setMessage(null);
     const targetEmail = isEmailLocked ? urlEmail : data.email;
+    setStatus('verifying');
     try {
       const res = await marketplaceApi.auth.verifyEmail({
         email: targetEmail,
         code: data.code,
       });
-      setStatus('verified');
       setMessage(res.message);
       await completeAutoSignIn(res.token, targetEmail);
     } catch (err: any) {
@@ -155,10 +169,16 @@ function VerifyEmailContent() {
 
   if (status === 'verifying') {
     return (
-      <AuthShell title="Verifying your email..." subtitle="Please wait while we confirm your verification link." badge="Email Verification">
-        <div className="py-10 flex flex-col items-center justify-center gap-3 text-center">
-          <Loader2 className="w-8 h-8 text-black animate-spin" />
-          <p className="text-xs text-gray-700">Validating cryptographic verification token...</p>
+      <AuthShell title="Verifying your email..." subtitle="Please wait while we verify your account and sign you in." badge="Email Verification">
+        <div className="py-12 flex flex-col items-center justify-center gap-4 text-center">
+          <div className="relative flex items-center justify-center w-16 h-16">
+            <div className="absolute inset-0 rounded-full border-2 border-stone-200 border-t-stone-950 animate-spin" />
+            <Loader2 className="w-7 h-7 text-stone-950 animate-spin" />
+          </div>
+          <div className="space-y-1">
+            <p className="text-sm font-bold text-stone-900">Verifying code...</p>
+            <p className="text-xs text-stone-500">Redirecting you to V-TRY Marketplace automatically.</p>
+          </div>
         </div>
       </AuthShell>
     );
@@ -168,15 +188,16 @@ function VerifyEmailContent() {
     return (
       <AuthShell
         title="Welcome to V-TRY Marketplace!"
-        subtitle="Your customer account is verified and signed in."
+        subtitle="Your account is verified. Entering marketplace..."
         badge="Verified Account"
       >
-        <div className="p-4 rounded-2xl bg-emerald-500/15 border border-emerald-500/30 text-emerald-700 text-xs flex items-start gap-2.5">
-          <CheckCircle2 className="w-5 h-5 shrink-0 mt-0.5" />
-          <div className="space-y-1">
-            <p className="font-bold text-gray-900">Registration complete</p>
-            <p>{message || 'Your email has been verified. Redirecting you to the marketplace...'}</p>
+        <div className="p-4 rounded-2xl bg-emerald-500/15 border border-emerald-500/30 text-emerald-700 text-xs flex items-center gap-3">
+          <CheckCircle2 className="w-5 h-5 shrink-0" />
+          <div className="space-y-0.5 flex-1">
+            <p className="font-bold text-gray-900">Verified &amp; signed in</p>
+            <p>{message || 'Taking you to your marketplace feed...'}</p>
           </div>
+          <Loader2 className="w-4 h-4 animate-spin text-emerald-700 shrink-0" />
         </div>
 
         <Link
@@ -286,8 +307,8 @@ function VerifyEmailContent() {
         </div>
 
         <Button type="submit" disabled={isSubmitting} className="w-full font-bold gap-2">
-          {isSubmitting ? <Loader2 className="w-4 h-4 animate-spin" /> : <ShieldCheck className="w-4 h-4" />}
-          <span>{isSubmitting ? 'Verifying & Signing In...' : 'Verify & Register for Marketplace'}</span>
+          {isSubmitting && <Loader2 className="w-4 h-4 animate-spin" />}
+          <span>Verify</span>
         </Button>
 
         <Button

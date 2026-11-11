@@ -54,16 +54,22 @@ export function AccountLayoutShell({
           {/* Account Sidebar */}
           <aside className="lg:col-span-3 rounded-3xl border border-stone-200 bg-white p-5 space-y-5">
             <div className="flex items-center gap-3 pb-4 border-b border-stone-100">
-              <div className="relative w-12 h-12 rounded-full overflow-hidden bg-stone-200 shrink-0">
-                <SafeImage
-                  src={
-                    session?.user?.image ||
-                    'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150'
-                  }
-                  alt={session?.user?.name || 'Customer'}
-                  fill
-                  className="object-cover"
-                />
+              <div className="relative w-12 h-12 rounded-full overflow-hidden bg-stone-950 text-white flex items-center justify-center font-bold text-sm shrink-0">
+                {session?.user?.image ? (
+                  <SafeImage
+                    src={session.user.image}
+                    alt={session?.user?.name || 'Customer'}
+                    fill
+                    className="object-cover"
+                  />
+                ) : (
+                  <span>
+                    {(session?.user?.name || session?.user?.email || 'U')
+                      .trim()
+                      .slice(0, 2)
+                      .toUpperCase()}
+                  </span>
+                )}
               </div>
               <div className="min-w-0">
                 <p className="text-sm font-bold text-stone-950 truncate">

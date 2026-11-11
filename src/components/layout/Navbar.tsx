@@ -7,12 +7,18 @@ import { usePathname, useRouter } from 'next/navigation';
 import { signOut, useSession } from 'next-auth/react';
 import {
   Bell,
+  ChevronDown,
   Compass,
   Heart,
+  History,
   Home,
+  LayoutDashboard,
   LogOut,
   Menu,
+  Package,
   Search,
+  Settings,
+  ShieldCheck,
   ShoppingBag,
   Sparkles,
   Store,
@@ -63,6 +69,8 @@ export function Navbar({
   const setCheckoutStep = useCartStore((s) => s.setCheckoutStep);
 
   const wishlistIds = useMarketplaceStore((s) => s.wishlistIds);
+  const tryOnHistory = useMarketplaceStore((s) => s.tryOnHistory);
+  const orders = useMarketplaceStore((s) => s.orders);
   const notifications = useMarketplaceStore((s) => s.notifications);
   const recentSearches = useMarketplaceStore((s) => s.recentSearches);
   const addRecentSearch = useMarketplaceStore((s) => s.addRecentSearch);
@@ -85,6 +93,8 @@ export function Navbar({
   };
 
   const searchWrapperRef = useRef<HTMLDivElement>(null);
+  const notifWrapperRef = useRef<HTMLDivElement>(null);
+  const accountWrapperRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (typeof controlledSearch === 'string') {
@@ -101,19 +111,45 @@ export function Navbar({
 
   useEffect(() => {
     const onDocClick = (e: MouseEvent) => {
-      if (searchWrapperRef.current && !searchWrapperRef.current.contains(e.target as Node)) {
+      const target = e.target as Node;
+      if (searchWrapperRef.current && !searchWrapperRef.current.contains(target)) {
         setSearchFocused(false);
+      }
+      if (notifWrapperRef.current && !notifWrapperRef.current.contains(target)) {
+        setNotifOpen(false);
+      }
+      if (accountWrapperRef.current && !accountWrapperRef.current.contains(target)) {
+        setAccountOpen(false);
+      }
+    };
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        setSearchFocused(false);
+        setNotifOpen(false);
+        setAccountOpen(false);
       }
     };
     document.addEventListener('mousedown', onDocClick);
-    return () => document.removeEventListener('mousedown', onDocClick);
+    document.addEventListener('keydown', onKeyDown);
+    return () => {
+      document.removeEventListener('mousedown', onDocClick);
+      document.removeEventListener('keydown', onKeyDown);
+    };
   }, []);
 
   const totalBagCount = mounted
     ? propCartCount ?? storeCartItems.reduce((sum, item) => sum + item.quantity, 0)
     : 0;
   const wishlistCount = mounted ? wishlistIds.length : 0;
+  const tryOnCount = mounted ? tryOnHistory.length : 0;
+  const ordersCount = mounted ? orders.length : 0;
   const unreadNotifs = mounted ? notifications.filter((n) => !n.read).length : 0;
+
+  const userDisplayName =
+    session?.user?.name?.trim() ||
+    session?.user?.email?.split('@')[0] ||
+    'Account';
+  const userInitial = userDisplayName.charAt(0).toUpperCase() || 'U';
 
   const handleSearchSubmit = (queryText?: string) => {
     const q = (queryText ?? localSearch).trim();
@@ -296,7 +332,7 @@ export function Navbar({
             </Link>
 
             {/* Notifications */}
-            <div className="relative">
+            <div ref={notifWrapperRef} className="relative">
               <button
                 type="button"
                 onClick={() => {
@@ -377,82 +413,224 @@ export function Navbar({
 
             {/* Account */}
             {session?.user ? (
-              <div className="relative">
+              <div ref={accountWrapperRef} className="relative">
                 <button
                   type="button"
                   onClick={() => {
                     setAccountOpen((o) => !o);
                     setNotifOpen(false);
                   }}
-                  className="flex items-center gap-2 pl-2 pr-3 py-1.5 rounded-full bg-stone-100 hover:bg-stone-200 border border-stone-200 text-xs font-semibold text-stone-900 transition-colors"
+                  aria-expanded={accountOpen}
+                  aria-label="Open profile menu"
+                  className="flex items-center gap-2 pl-1.5 pr-2.5 py-1.5 rounded-full bg-stone-100 hover:bg-stone-200 border border-stone-200 text-xs font-semibold text-stone-900 transition-colors"
                 >
-                  {session.user.image ? (
-                    <Image
-                      src={session.user.image}
-                      alt={session.user.name || 'Customer'}
-                      width={20}
-                      height={20}
-                      className="w-5 h-5 rounded-full object-cover"
-                    />
-                  ) : (
-                    <User className="w-3.5 h-3.5" />
-                  )}
-                  <span className="hidden sm:inline max-w-[80px] truncate">
-                    {session.user.name?.split(' ')[0] || 'Account'}
+                  <div className="relative w-6 h-6 rounded-full bg-stone-950 text-white flex items-center justify-center text-[11px] font-bold shrink-0">
+                    {session.user.image ? (
+                      <Image
+                        src={session.user.image}
+                        alt={userDisplayName}
+                        width={24}
+                        height={24}
+                        className="w-6 h-6 rounded-full object-cover"
+                      />
+                    ) : (
+                      <span>{userInitial}</span>
+                    )}
+                    <span className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-emerald-500 ring-2 ring-white" />
+                  </div>
+                  <span className="max-w-[110px] sm:max-w-[140px] truncate font-semibold text-stone-900">
+                    {userDisplayName}
                   </span>
+                  <ChevronDown
+                    className={`w-3.5 h-3.5 text-stone-500 shrink-0 transition-transform ${
+                      accountOpen ? 'rotate-180' : ''
+                    }`}
+                  />
                 </button>
 
                 {accountOpen && (
-                  <div className="absolute right-0 mt-2 w-56 bg-white border border-stone-200 rounded-2xl shadow-xl p-2 z-50 text-xs">
-                    <div className="px-3 py-2 border-b border-stone-100 mb-1">
-                      <p className="font-bold text-stone-900 truncate">{session.user.name}</p>
-                      <p className="text-[11px] text-stone-500 truncate">{session.user.email}</p>
+                  <div className="absolute right-0 mt-2 w-72 bg-white border border-stone-200 rounded-2xl shadow-2xl p-2.5 z-50 text-xs">
+                    {/* User Identity Header */}
+                    <div className="flex items-center gap-3 p-2.5 rounded-xl bg-stone-50 border border-stone-100 mb-2">
+                      <div className="relative w-10 h-10 rounded-full bg-stone-950 text-white flex items-center justify-center text-sm font-bold shrink-0">
+                        {session.user.image ? (
+                          <Image
+                            src={session.user.image}
+                            alt={userDisplayName}
+                            width={40}
+                            height={40}
+                            className="w-10 h-10 rounded-full object-cover"
+                          />
+                        ) : (
+                          <span>{userInitial}</span>
+                        )}
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-center gap-1.5">
+                          <p className="font-bold text-stone-950 truncate">{userDisplayName}</p>
+                          <ShieldCheck className="w-3.5 h-3.5 text-emerald-600 shrink-0" aria-label="Verified" />
+                        </div>
+                        <p className="text-[11px] text-stone-500 truncate">{session.user.email}</p>
+                      </div>
                     </div>
-                    <Link
-                      href="/account"
-                      onClick={() => setAccountOpen(false)}
-                      className="block px-3 py-2 rounded-xl hover:bg-stone-100 font-medium text-stone-800"
-                    >
-                      Account Dashboard
-                    </Link>
-                    <Link
-                      href="/account/orders"
-                      onClick={() => setAccountOpen(false)}
-                      className="block px-3 py-2 rounded-xl hover:bg-stone-100 font-medium text-stone-800"
-                    >
-                      My Orders
-                    </Link>
-                    <Link
-                      href="/account/wishlist"
-                      onClick={() => setAccountOpen(false)}
-                      className="block px-3 py-2 rounded-xl hover:bg-stone-100 font-medium text-stone-800"
-                    >
-                      Saved Favorites
-                    </Link>
-                    <Link
-                      href="/account/try-on-history"
-                      onClick={() => setAccountOpen(false)}
-                      className="block px-3 py-2 rounded-xl hover:bg-stone-100 font-medium text-stone-800"
-                    >
-                      Try-On History
-                    </Link>
-                    <Link
-                      href="/account/settings"
-                      onClick={() => setAccountOpen(false)}
-                      className="block px-3 py-2 rounded-xl hover:bg-stone-100 font-medium text-stone-800"
-                    >
-                      Privacy & Settings
-                    </Link>
+
+                    {/* Quick Profile Summary Stats */}
+                    <div className="grid grid-cols-3 gap-1.5 mb-2">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setAccountOpen(false);
+                          handleOpenCart();
+                        }}
+                        className="p-2 rounded-xl border border-stone-100 hover:border-stone-300 bg-white text-center transition-colors"
+                      >
+                        <p className="font-bold text-stone-950 text-sm">{totalBagCount}</p>
+                        <p className="text-[10px] text-stone-500 font-medium">Cart</p>
+                      </button>
+                      <Link
+                        href="/account/orders"
+                        onClick={() => setAccountOpen(false)}
+                        className="p-2 rounded-xl border border-stone-100 hover:border-stone-300 bg-white text-center transition-colors"
+                      >
+                        <p className="font-bold text-stone-950 text-sm">{ordersCount}</p>
+                        <p className="text-[10px] text-stone-500 font-medium">Orders</p>
+                      </Link>
+                      <Link
+                        href="/account/wishlist"
+                        onClick={() => setAccountOpen(false)}
+                        className="p-2 rounded-xl border border-stone-100 hover:border-stone-300 bg-white text-center transition-colors"
+                      >
+                        <p className="font-bold text-stone-950 text-sm">{wishlistCount}</p>
+                        <p className="text-[10px] text-stone-500 font-medium">Saved</p>
+                      </Link>
+                    </div>
+
+                    {/* User Profile Navigation */}
+                    <div className="space-y-0.5">
+                      <Link
+                        href="/account/profile"
+                        onClick={() => setAccountOpen(false)}
+                        className="flex items-center justify-between px-3 py-2 rounded-xl hover:bg-stone-100 font-medium text-stone-800"
+                      >
+                        <span className="inline-flex items-center gap-2.5">
+                          <User className="w-3.5 h-3.5 text-stone-600" />
+                          <span>My Profile &amp; Addresses</span>
+                        </span>
+                      </Link>
+                      <Link
+                        href="/account"
+                        onClick={() => setAccountOpen(false)}
+                        className="flex items-center justify-between px-3 py-2 rounded-xl hover:bg-stone-100 font-medium text-stone-800"
+                      >
+                        <span className="inline-flex items-center gap-2.5">
+                          <LayoutDashboard className="w-3.5 h-3.5 text-stone-600" />
+                          <span>Account Overview</span>
+                        </span>
+                      </Link>
+                      <Link
+                        href="/try-on"
+                        onClick={() => setAccountOpen(false)}
+                        className="flex items-center justify-between px-3 py-2 rounded-xl hover:bg-stone-100 font-medium text-stone-800"
+                      >
+                        <span className="inline-flex items-center gap-2.5">
+                          <Sparkles className="w-3.5 h-3.5 text-amber-600" />
+                          <span>Virtual Try-On Test Studio</span>
+                        </span>
+                        <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-stone-100 text-stone-700 font-bold">
+                          Test
+                        </span>
+                      </Link>
+                      <Link
+                        href="/account/try-on-history"
+                        onClick={() => setAccountOpen(false)}
+                        className="flex items-center justify-between px-3 py-2 rounded-xl hover:bg-stone-100 font-medium text-stone-800"
+                      >
+                        <span className="inline-flex items-center gap-2.5">
+                          <History className="w-3.5 h-3.5 text-stone-600" />
+                          <span>Try-On History</span>
+                        </span>
+                        {tryOnCount > 0 && (
+                          <span className="text-[10px] font-bold text-stone-500">{tryOnCount}</span>
+                        )}
+                      </Link>
+                      <Link
+                        href="/account/orders"
+                        onClick={() => setAccountOpen(false)}
+                        className="flex items-center justify-between px-3 py-2 rounded-xl hover:bg-stone-100 font-medium text-stone-800"
+                      >
+                        <span className="inline-flex items-center gap-2.5">
+                          <Package className="w-3.5 h-3.5 text-stone-600" />
+                          <span>My Orders</span>
+                        </span>
+                      </Link>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setAccountOpen(false);
+                          handleOpenCart();
+                        }}
+                        className="w-full flex items-center justify-between px-3 py-2 rounded-xl hover:bg-stone-100 font-medium text-stone-800 text-left"
+                      >
+                        <span className="inline-flex items-center gap-2.5">
+                          <ShoppingBag className="w-3.5 h-3.5 text-stone-600" />
+                          <span>Shopping Cart</span>
+                        </span>
+                        {totalBagCount > 0 && (
+                          <span className="px-1.5 py-0.5 rounded-full bg-stone-950 text-white text-[10px] font-bold">
+                            {totalBagCount}
+                          </span>
+                        )}
+                      </button>
+                      <Link
+                        href="/account/wishlist"
+                        onClick={() => setAccountOpen(false)}
+                        className="flex items-center justify-between px-3 py-2 rounded-xl hover:bg-stone-100 font-medium text-stone-800"
+                      >
+                        <span className="inline-flex items-center gap-2.5">
+                          <Heart className="w-3.5 h-3.5 text-stone-600" />
+                          <span>Saved Favorites</span>
+                        </span>
+                        {wishlistCount > 0 && (
+                          <span className="text-[10px] font-bold text-stone-500">{wishlistCount}</span>
+                        )}
+                      </Link>
+                      <Link
+                        href="/notifications"
+                        onClick={() => setAccountOpen(false)}
+                        className="flex items-center justify-between px-3 py-2 rounded-xl hover:bg-stone-100 font-medium text-stone-800"
+                      >
+                        <span className="inline-flex items-center gap-2.5">
+                          <Bell className="w-3.5 h-3.5 text-stone-600" />
+                          <span>Notifications</span>
+                        </span>
+                        {unreadNotifs > 0 && (
+                          <span className="px-1.5 py-0.5 rounded-full bg-rose-500 text-white text-[10px] font-bold">
+                            {unreadNotifs}
+                          </span>
+                        )}
+                      </Link>
+                      <Link
+                        href="/account/settings"
+                        onClick={() => setAccountOpen(false)}
+                        className="flex items-center justify-between px-3 py-2 rounded-xl hover:bg-stone-100 font-medium text-stone-800"
+                      >
+                        <span className="inline-flex items-center gap-2.5">
+                          <Settings className="w-3.5 h-3.5 text-stone-600" />
+                          <span>Settings &amp; Privacy</span>
+                        </span>
+                      </Link>
+                    </div>
+
                     <button
                       type="button"
                       onClick={() => {
                         if (typeof window !== 'undefined') localStorage.removeItem('marketplace_token');
                         signOut({ callbackUrl: '/' });
                       }}
-                      className="w-full text-left px-3 py-2 rounded-xl hover:bg-rose-50 font-semibold text-rose-600 flex items-center gap-2 mt-1 border-t border-stone-100 pt-2"
+                      className="w-full text-left px-3 py-2 rounded-xl hover:bg-rose-50 font-semibold text-rose-600 flex items-center gap-2.5 mt-2 border-t border-stone-100 pt-2.5"
                     >
                       <LogOut className="w-3.5 h-3.5" />
-                      Sign Out
+                      <span>Sign Out</span>
                     </button>
                   </div>
                 )}
@@ -546,14 +724,46 @@ export function Navbar({
                 <span>{totalBagCount} items</span>
               </Link>
               {session?.user ? (
-                <Link
-                  href="/account"
-                  onClick={() => setMobileMenuOpen(false)}
-                  className="flex items-center justify-between px-3 py-2.5 rounded-xl bg-stone-50 font-semibold"
-                >
-                  <span>Customer Account</span>
-                  <User className="w-4 h-4" />
-                </Link>
+                <div className="space-y-1.5">
+                  <div className="flex items-center gap-2.5 px-3 py-2.5 rounded-xl bg-stone-50 border border-stone-100">
+                    <div className="w-8 h-8 rounded-full bg-stone-950 text-white flex items-center justify-center text-xs font-bold shrink-0">
+                      {userInitial}
+                    </div>
+                    <div className="min-w-0">
+                      <p className="font-bold text-stone-950 truncate">{userDisplayName}</p>
+                      <p className="text-[11px] text-stone-500 truncate">{session.user.email}</p>
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-2 gap-1.5">
+                    <Link
+                      href="/account/profile"
+                      onClick={() => setMobileMenuOpen(false)}
+                      className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-stone-50 font-semibold"
+                    >
+                      <User className="w-3.5 h-3.5" />
+                      <span>Profile</span>
+                    </Link>
+                    <Link
+                      href="/account/settings"
+                      onClick={() => setMobileMenuOpen(false)}
+                      className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-stone-50 font-semibold"
+                    >
+                      <Settings className="w-3.5 h-3.5" />
+                      <span>Settings</span>
+                    </Link>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (typeof window !== 'undefined') localStorage.removeItem('marketplace_token');
+                      signOut({ callbackUrl: '/' });
+                    }}
+                    className="w-full flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl bg-rose-50 text-rose-600 font-semibold"
+                  >
+                    <LogOut className="w-3.5 h-3.5" />
+                    <span>Sign Out</span>
+                  </button>
+                </div>
               ) : (
                 <div className="grid grid-cols-2 gap-2">
                   <button

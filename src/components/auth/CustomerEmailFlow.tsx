@@ -41,11 +41,13 @@ export function CustomerEmailFlow({
   const [loading, setLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(initialError);
+  const [suggestLoginSwitch, setSuggestLoginSwitch] = useState(false);
   const [googleNotice, setGoogleNotice] = useState<string | null>(null);
   const [googleConfigured, setGoogleConfigured] = useState(false);
 
   useEffect(() => {
     setMode(initialMode);
+    setSuggestLoginSwitch(false);
   }, [initialMode]);
 
   useEffect(() => {
@@ -64,6 +66,7 @@ export function CustomerEmailFlow({
     if (nextMode === mode) return;
     setMode(nextMode);
     setErrorMsg(null);
+    setSuggestLoginSwitch(false);
     setGoogleNotice(null);
     setPassword('');
     setConfirmPassword('');
@@ -153,6 +156,7 @@ export function CustomerEmailFlow({
   const handleSignupSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMsg(null);
+    setSuggestLoginSwitch(false);
     setGoogleNotice(null);
 
     const cleanName = name.trim();
@@ -178,6 +182,26 @@ export function CustomerEmailFlow({
     setEmail(cleanEmail);
     setLoading(true);
     try {
+      const check = await marketplaceApi.auth.checkEmail(cleanEmail);
+      if (check.portalMismatch) {
+        setErrorMsg('This email address is already in use. Please use a different email address.');
+        return;
+      }
+
+      if (check.exists) {
+        if (check.emailVerified) {
+          setErrorMsg('An account with this email address already exists. Please log in instead.');
+          setSuggestLoginSwitch(true);
+          return;
+        }
+        await marketplaceApi.auth.resendVerification(cleanEmail);
+        onNavigate?.();
+        router.push(
+          `/verify-email?email=${encodeURIComponent(cleanEmail)}&from=register&callbackUrl=${encodeURIComponent(callbackUrl)}`
+        );
+        return;
+      }
+
       const res = await marketplaceApi.auth.register({
         name: cleanName,
         email: cleanEmail,
@@ -191,7 +215,12 @@ export function CustomerEmailFlow({
         `/verify-email?email=${encodeURIComponent(res.user.email)}&from=register&callbackUrl=${encodeURIComponent(callbackUrl)}${warningParam}`
       );
     } catch (err: any) {
-      setErrorMsg(err?.message || 'Could not create your account. Please try again.');
+      if (err?.status === 409) {
+        setErrorMsg('An account with this email address already exists. Please log in instead.');
+        setSuggestLoginSwitch(true);
+      } else {
+        setErrorMsg(err?.message || 'Could not create your account. Please try again.');
+      }
     } finally {
       setLoading(false);
     }
@@ -280,7 +309,18 @@ export function CustomerEmailFlow({
       {errorMsg && (
         <div className="p-3 rounded-xl bg-rose-500/15 border border-rose-500/30 text-rose-700 text-xs flex items-start gap-2">
           <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
-          <span>{errorMsg}</span>
+          <div className="space-y-1.5 flex-1">
+            <p>{errorMsg}</p>
+            {suggestLoginSwitch && mode === 'signup' && (
+              <button
+                type="button"
+                onClick={() => switchMode('login')}
+                className="font-bold text-stone-900 underline underline-offset-2 hover:text-black"
+              >
+                Log in with {email} →
+              </button>
+            )}
+          </div>
         </div>
       )}
 

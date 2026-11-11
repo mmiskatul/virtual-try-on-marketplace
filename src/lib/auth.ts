@@ -33,7 +33,6 @@ const providers: NextAuthOptions['providers'] = [
           id: meData.user.id,
           name: meData.user.name,
           email: meData.user.email,
-          image: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150',
           role: meData.user.role || 'CUSTOMER',
           emailVerified: Boolean(meData.user.emailVerified),
           backendToken: credentials.verifiedToken,
@@ -75,7 +74,6 @@ const providers: NextAuthOptions['providers'] = [
         id: data.user.id,
         name: data.user.name,
         email: data.user.email,
-        image: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150',
         role: data.user.role || 'CUSTOMER',
         emailVerified: Boolean(data.user.emailVerified),
         backendToken: data.token
