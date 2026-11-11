@@ -1,4 +1,6 @@
-const API_BASE = process.env.NEXT_PUBLIC_BACKEND_API_URL || 'http://localhost:4000';
+import { MARKETPLACE_API_URL, marketplaceFetch } from '@/lib/api';
+
+const API_BASE = MARKETPLACE_API_URL;
 
 export interface AsyncTryOnResult {
   mode: 'live_ai' | 'unavailable';
@@ -8,23 +10,13 @@ export interface AsyncTryOnResult {
   message?: string;
 }
 
-function getMarketplaceToken(): string | null {
-  if (typeof window === 'undefined') return null;
-  return localStorage.getItem('marketplace_token');
-}
-
 export async function uploadPersonPhotoSigned(file: File): Promise<{
   bucket: string;
   objectKey: string;
   uploadId: string;
 }> {
-  const token = getMarketplaceToken();
-  const intentRes = await fetch(`${API_BASE}/api/v1/try-on/upload-url`, {
+  const intentRes = await marketplaceFetch(`${API_BASE}/api/v1/try-on/upload-url`, {
     method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      ...(token ? { Authorization: `Bearer ${token}` } : {}),
-    },
     body: JSON.stringify({
       contentType: file.type || 'image/jpeg',
       sizeBytes: file.size || 1024,
@@ -44,6 +36,7 @@ export async function uploadPersonPhotoSigned(file: File): Promise<{
       'Content-Type': file.type || 'image/jpeg',
       ...(intent.headers || {}),
     },
+    credentials: uploadUrl.startsWith(API_BASE) ? 'include' : undefined,
     body: file,
   });
   if (!putRes.ok) {
@@ -65,16 +58,13 @@ export async function runAsyncTryOnPipeline(params: {
   quality?: 'fast_preview' | 'standard' | 'high_fidelity';
   onStatus?: (status: string) => void;
 }): Promise<AsyncTryOnResult> {
-  const token = getMarketplaceToken();
   const idemKey = `tryon_${params.productId}_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`;
 
   try {
-    const submitRes = await fetch(`${API_BASE}/api/v1/try-on/jobs`, {
+    const submitRes = await marketplaceFetch(`${API_BASE}/api/v1/try-on/jobs`, {
       method: 'POST',
       headers: {
-        'Content-Type': 'application/json',
         'Idempotency-Key': idemKey,
-        ...(token ? { Authorization: `Bearer ${token}` } : {}),
       },
       body: JSON.stringify({
         productId: params.productId,
@@ -104,12 +94,12 @@ export async function runAsyncTryOnPipeline(params: {
       return { mode: 'live_ai', jobId, status: 'COMPLETED', resultUrl: job.resultUrl };
     }
 
-    // Try SSE first in browser, falling back cleanly to short polling
+    // Try SSE first in browser with HttpOnly cookies, falling back cleanly to short polling
     if (typeof window !== 'undefined' && typeof EventSource !== 'undefined') {
       try {
         const sseUrl = `${API_BASE}/api/v1/try-on/jobs/${encodeURIComponent(jobId)}/events${jobToken ? `?token=${encodeURIComponent(jobToken)}` : ''}`;
         const settled = await new Promise<AsyncTryOnResult | null>((resolve) => {
-          const es = new EventSource(sseUrl);
+          const es = new EventSource(sseUrl, { withCredentials: true });
           const timer = setTimeout(() => {
             es.close();
             resolve(null);
@@ -150,9 +140,8 @@ export async function runAsyncTryOnPipeline(params: {
 
     for (let i = 0; i < 20; i++) {
       await new Promise((r) => setTimeout(r, 1200));
-      const pollRes = await fetch(`${API_BASE}/api/v1/try-on/jobs/${encodeURIComponent(jobId)}`, {
+      const pollRes = await marketplaceFetch(`${API_BASE}/api/v1/try-on/jobs/${encodeURIComponent(jobId)}`, {
         headers: {
-          ...(token ? { Authorization: `Bearer ${token}` } : {}),
           ...(jobToken ? { 'x-try-on-token': jobToken } : {}),
         },
         cache: 'no-store',
@@ -181,10 +170,7 @@ export async function runAsyncTryOnPipeline(params: {
 }
 
 export async function fetchTryOnHistory() {
-  const token = getMarketplaceToken();
-  if (!token) return [];
-  const res = await fetch(`${API_BASE}/api/v1/try-on/jobs`, {
-    headers: { Authorization: `Bearer ${token}` },
+  const res = await marketplaceFetch(`${API_BASE}/api/v1/try-on/jobs`, {
     cache: 'no-store',
   });
   if (!res.ok) return [];

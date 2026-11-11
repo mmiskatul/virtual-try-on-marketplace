@@ -128,9 +128,6 @@ export default function CheckoutPage() {
     }
 
     setSubmitting(true);
-    const token =
-      session?.backendToken ||
-      (typeof window !== 'undefined' ? localStorage.getItem('marketplace_token') || undefined : undefined);
 
     const res = await submitMultiBrandCheckout({
       items: safeItems,
@@ -147,7 +144,6 @@ export default function CheckoutPage() {
       deliveryMethod,
       paymentMethod,
       promoCode: appliedPromo || undefined,
-      bearerToken: token,
     });
     setSubmitting(false);
 

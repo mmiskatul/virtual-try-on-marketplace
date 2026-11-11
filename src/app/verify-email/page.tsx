@@ -68,7 +68,7 @@ function VerifyEmailContent() {
     return () => clearTimeout(timer);
   }, [cooldown]);
 
-  const completeAutoSignIn = async (token?: string, emailForStorage?: string) => {
+  const completeAutoSignIn = async (sessionId?: string, emailForStorage?: string) => {
     if (typeof window !== 'undefined' && emailForStorage) {
       try {
         sessionStorage.removeItem(`vton_pending_verify_${emailForStorage.toLowerCase()}`);
@@ -76,17 +76,15 @@ function VerifyEmailContent() {
         // ignore
       }
     }
-    if (!token) {
+    if (!sessionId) {
       router.replace(callbackUrl);
       router.refresh();
       return;
     }
-    if (typeof window !== 'undefined') {
-      localStorage.setItem('marketplace_token', token);
-    }
+    // HttpOnly cookies were set by /verify-email response; verify them cleanly with NextAuth
     const signInResult = await signIn('credentials', {
       redirect: false,
-      verifiedToken: token,
+      email: emailForStorage || urlEmail || '',
     });
     if (signInResult?.error) {
       setStatus('error');
@@ -114,7 +112,7 @@ function VerifyEmailContent() {
       .verifyEmail({ token: urlToken })
       .then(async (res) => {
         setMessage(res.message);
-        await completeAutoSignIn(res.token, res.user?.email || urlEmail);
+        await completeAutoSignIn(res.sessionId, res.user?.email || urlEmail);
       })
       .catch((err: any) => {
         setStatus('error');
@@ -132,7 +130,7 @@ function VerifyEmailContent() {
         code: data.code,
       });
       setMessage(res.message);
-      await completeAutoSignIn(res.token, targetEmail);
+      await completeAutoSignIn(res.sessionId, res.user?.email || targetEmail);
     } catch (err: any) {
       setStatus('error');
       setMessage(err?.message || 'Invalid or expired verification code.');

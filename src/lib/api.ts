@@ -1,9 +1,9 @@
 /**
  * Production API Client for Central Fashion Marketplace
- * Handles communication with backend-api (:4000) and ai-service (:8000)
+ * Uses HttpOnly cookies (`vtry_mkt_access`, `vtry_mkt_refresh`, `vtry_mkt_sid`) + single-flight refresh.
  */
 
-const MARKETPLACE_API_URL = process.env.NEXT_PUBLIC_BACKEND_API_URL || 'http://localhost:4000';
+export const MARKETPLACE_API_URL = process.env.NEXT_PUBLIC_BACKEND_API_URL || 'http://localhost:4000';
 
 export class ApiError extends Error {
   constructor(public status: number, message: string, public data?: any) {
@@ -12,23 +12,80 @@ export class ApiError extends Error {
   }
 }
 
-async function request<T>(url: string, options: RequestInit = {}): Promise<T> {
+let refreshInFlight: Promise<boolean> | null = null;
+
+function isBackendUrl(url: string): boolean {
+  return url.startsWith(MARKETPLACE_API_URL) || url.startsWith('/');
+}
+
+function shouldAttemptRefresh(url: string): boolean {
+  const lower = url.toLowerCase();
+  return !(
+    lower.includes('/auth/login') ||
+    lower.includes('/auth/register') ||
+    lower.includes('/auth/refresh') ||
+    lower.includes('/auth/logout') ||
+    lower.includes('/auth/oauth-google') ||
+    lower.includes('/auth/oauth-exchange')
+  );
+}
+
+export async function refreshMarketplaceSession(): Promise<boolean> {
+  if (typeof window === 'undefined') return false;
+  if (refreshInFlight) return refreshInFlight;
+
+  refreshInFlight = (async () => {
+    try {
+      const res = await fetch(`${MARKETPLACE_API_URL}/api/v1/marketplace/auth/refresh`, {
+        method: 'POST',
+        credentials: 'include',
+        headers: {
+          'X-Auth-Portal': 'marketplace',
+          'X-Auth-Transport': 'cookie',
+        },
+      });
+      return res.ok;
+    } catch {
+      return false;
+    } finally {
+      refreshInFlight = null;
+    }
+  })();
+
+  return refreshInFlight;
+}
+
+export async function marketplaceFetch(url: string, options: RequestInit = {}): Promise<Response> {
   const headers = new Headers(options.headers || {});
   if (!headers.has('Content-Type') && !(options.body instanceof FormData)) {
     headers.set('Content-Type', 'application/json');
   }
 
-  if (typeof window !== 'undefined') {
-    const token = localStorage.getItem('marketplace_token');
-    if (token && !headers.has('Authorization')) {
-      headers.set('Authorization', `Bearer ${token}`);
-    }
+  const backendCall = isBackendUrl(url);
+  if (backendCall) {
+    headers.set('X-Auth-Portal', 'marketplace');
+    headers.set('X-Auth-Transport', 'cookie');
   }
 
-  const response = await fetch(url, {
-    ...options,
-    headers
-  });
+  const doFetch = () =>
+    fetch(url, {
+      ...options,
+      headers,
+      credentials: backendCall ? 'include' : options.credentials,
+    });
+
+  let response = await doFetch();
+  if (response.status === 401 && backendCall && shouldAttemptRefresh(url)) {
+    const refreshed = await refreshMarketplaceSession();
+    if (refreshed) {
+      response = await doFetch();
+    }
+  }
+  return response;
+}
+
+async function request<T>(url: string, options: RequestInit = {}): Promise<T> {
+  const response = await marketplaceFetch(url, options);
 
   if (!response.ok) {
     let errorData: any;
@@ -76,7 +133,8 @@ export const marketplaceApi = {
     login: (payload: { email: string; password: string }) => {
       return request<{
         message: string;
-        token: string;
+        sessionId?: string;
+        session?: { id: string; portal: string; expiresAt: string; accessExpiresAt: string };
         user: { id: string; name: string; email: string; role: string; emailVerified: boolean };
       }>(`${MARKETPLACE_API_URL}/api/v1/marketplace/auth/login`, {
         method: 'POST',
@@ -84,11 +142,32 @@ export const marketplaceApi = {
       });
     },
 
+    session: () => {
+      return request<{
+        authenticated: boolean;
+        refreshed?: boolean;
+        sessionId?: string | null;
+        user: { id: string; name: string; email: string; role: string; emailVerified: boolean } | null;
+      }>(`${MARKETPLACE_API_URL}/api/v1/marketplace/auth/session`, {
+        method: 'GET',
+        cache: 'no-store',
+      });
+    },
+
+    logout: () => {
+      return request<{ ok: boolean; loggedOut: boolean; message: string }>(
+        `${MARKETPLACE_API_URL}/api/v1/marketplace/auth/logout`,
+        {
+          method: 'POST',
+          body: JSON.stringify({}),
+        },
+      );
+    },
+
     verifyEmail: (payload: { token?: string; email?: string; code?: string }) => {
       return request<{
         message: string;
         user: { id: string; name: string; email: string; role: string; emailVerified: boolean };
-        token?: string;
         sessionId?: string;
       }>(`${MARKETPLACE_API_URL}/api/v1/marketplace/auth/verify-email`, {
         method: 'POST',

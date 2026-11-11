@@ -103,13 +103,6 @@ export function Navbar({
   }, [controlledSearch]);
 
   useEffect(() => {
-    if (typeof window === 'undefined') return;
-    if (session?.backendToken) {
-      localStorage.setItem('marketplace_token', session.backendToken);
-    }
-  }, [session?.backendToken]);
-
-  useEffect(() => {
     const onDocClick = (e: MouseEvent) => {
       const target = e.target as Node;
       if (searchWrapperRef.current && !searchWrapperRef.current.contains(target)) {
@@ -623,9 +616,9 @@ export function Navbar({
 
                     <button
                       type="button"
-                      onClick={() => {
-                        if (typeof window !== 'undefined') localStorage.removeItem('marketplace_token');
-                        signOut({ callbackUrl: '/' });
+                      onClick={async () => {
+                        const { logoutMarketplace } = await import('@/lib/logout');
+                        await logoutMarketplace({ callbackUrl: '/' });
                       }}
                       className="w-full text-left px-3 py-2 rounded-xl hover:bg-rose-50 font-semibold text-rose-600 flex items-center gap-2.5 mt-2 border-t border-stone-100 pt-2.5"
                     >
@@ -754,9 +747,9 @@ export function Navbar({
                   </div>
                   <button
                     type="button"
-                    onClick={() => {
-                      if (typeof window !== 'undefined') localStorage.removeItem('marketplace_token');
-                      signOut({ callbackUrl: '/' });
+                    onClick={async () => {
+                      const { logoutMarketplace } = await import('@/lib/logout');
+                      await logoutMarketplace({ callbackUrl: '/' });
                     }}
                     className="w-full flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl bg-rose-50 text-rose-600 font-semibold"
                   >

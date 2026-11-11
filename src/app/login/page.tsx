@@ -72,8 +72,8 @@ function LoginFormContent() {
             <button
               type="button"
               onClick={async () => {
-                if (typeof window !== 'undefined') localStorage.removeItem('marketplace_token');
-                await signOut({ redirect: false });
+                const { logoutMarketplace } = await import('@/lib/logout');
+                await logoutMarketplace({ redirect: false });
                 await getSession();
               }}
               className="px-2.5 py-1.5 rounded-lg bg-gray-100 hover:bg-gray-200 text-gray-700"

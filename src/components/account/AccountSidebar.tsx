@@ -103,9 +103,9 @@ export function AccountLayoutShell({
 
               <button
                 type="button"
-                onClick={() => {
-                  if (typeof window !== 'undefined') localStorage.removeItem('marketplace_token');
-                  signOut({ callbackUrl: '/' });
+                onClick={async () => {
+                  const { logoutMarketplace } = await import('@/lib/logout');
+                  await logoutMarketplace({ callbackUrl: '/' });
                 }}
                 className="flex items-center gap-2.5 px-3.5 py-2.5 rounded-xl whitespace-nowrap text-rose-600 hover:bg-rose-50 font-bold lg:mt-2 lg:border-t lg:border-stone-100 lg:pt-3"
               >

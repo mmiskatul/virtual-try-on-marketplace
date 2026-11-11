@@ -107,20 +107,20 @@ export function CustomerEmailFlow({
     setErrorMsg(null);
     setGoogleNotice(null);
 
-    const result = await signIn('credentials', {
-      redirect: false,
-      email: cleanEmail,
-      password,
-    });
-
-    if (result?.error) {
-      if (result.error === 'EMAIL_NOT_VERIFIED') {
+    try {
+      // Authenticate directly with backend first so browser stores HttpOnly access/refresh/sid cookies
+      await marketplaceApi.auth.login({
+        email: cleanEmail,
+        password,
+      });
+    } catch (err: any) {
+      if (err?.data?.code === 'EMAIL_NOT_VERIFIED') {
         let deliveryWarning = '';
         try {
           await marketplaceApi.auth.resendVerification(cleanEmail);
-        } catch (err: any) {
-          if (err?.message) {
-            deliveryWarning = `&warning=${encodeURIComponent(err.message)}`;
+        } catch (resendErr: any) {
+          if (resendErr?.message) {
+            deliveryWarning = `&warning=${encodeURIComponent(resendErr.message)}`;
           }
         }
         setLoading(false);
@@ -132,18 +132,27 @@ export function CustomerEmailFlow({
       }
 
       setLoading(false);
+      setErrorMsg(err?.message || 'Invalid email or password.');
+      return;
+    }
+
+    const result = await signIn('credentials', {
+      redirect: false,
+      email: cleanEmail,
+      password,
+    });
+
+    if (result?.error) {
+      setLoading(false);
       setErrorMsg(
         result.error === 'CredentialsSignin'
-          ? 'Invalid email or password.'
+          ? 'Could not establish local session. Please try again.'
           : result.error
       );
       return;
     }
 
-    const updatedSession = await getSession();
-    if (updatedSession?.backendToken && typeof window !== 'undefined') {
-      localStorage.setItem('marketplace_token', updatedSession.backendToken);
-    }
+    await getSession();
     setLoading(false);
     if (onAuthenticated) {
       onAuthenticated();

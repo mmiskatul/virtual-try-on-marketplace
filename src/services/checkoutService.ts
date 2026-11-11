@@ -89,7 +89,6 @@ export async function submitMultiBrandCheckout(params: {
   deliveryMethod: 'standard' | 'express' | 'same-day';
   paymentMethod: PaymentMethodId;
   promoCode?: string;
-  bearerToken?: string;
 }): Promise<{ ok: true; order: CustomerOrder } | { ok: false; error: string }> {
   const groups = groupCartItemsByBrand(params.items);
   if (groups.length === 0) {
@@ -127,12 +126,9 @@ export async function submitMultiBrandCheckout(params: {
     try {
       const controller = new AbortController();
       const timer = setTimeout(() => controller.abort(), 5000);
-      const res = await fetch(`${API_BASE}/api/v1/checkout`, {
+      const { marketplaceFetch } = await import('@/lib/api');
+      const res = await marketplaceFetch(`${API_BASE}/api/v1/checkout`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          ...(params.bearerToken ? { Authorization: `Bearer ${params.bearerToken}` } : {}),
-        },
         body: JSON.stringify({
           items: payloadItems,
           customerEmail: params.customerEmail,

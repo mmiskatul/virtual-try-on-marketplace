@@ -1,6 +1,7 @@
+import { MARKETPLACE_API_URL, marketplaceFetch } from '@/lib/api';
 import { MarketplaceProduct } from '../types';
 
-const API_BASE = process.env.NEXT_PUBLIC_BACKEND_API_URL || 'http://localhost:4000';
+const API_BASE = MARKETPLACE_API_URL;
 
 export interface TryOnProviderStatus {
   connected: boolean;
@@ -74,7 +75,7 @@ export async function uploadCustomerTryOnPhoto(file: File): Promise<{
     formData.append('file', file);
     const controller = new AbortController();
     const timer = setTimeout(() => controller.abort(), 8000);
-    const res = await fetch(`${API_BASE}/api/v1/try-on/upload`, {
+    const res = await marketplaceFetch(`${API_BASE}/api/v1/try-on/upload`, {
       method: 'POST',
       body: formData,
       signal: controller.signal,
@@ -110,10 +111,9 @@ export async function executeVirtualTryOn(params: {
   try {
     const controller = new AbortController();
     const timer = setTimeout(() => controller.abort(), 20000);
-    const res = await fetch(`${API_BASE}/api/v1/try-on/direct`, {
+    const res = await marketplaceFetch(`${API_BASE}/api/v1/try-on/direct`, {
       method: 'POST',
       headers: {
-        'Content-Type': 'application/json',
         'Idempotency-Key': `vton_${product.id}_${Date.now()}`,
       },
       body: JSON.stringify({
