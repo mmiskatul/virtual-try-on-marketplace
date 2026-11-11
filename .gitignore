@@ -5,14 +5,20 @@ node_modules/
 
 # Next.js Build
 /.next/
+/.next*/
 /out/
 build/
 dist/
+coverage/
 *.tsbuildinfo
+
+# Deployment
+.vercel
 
 # Local Environment Variables
 .env
-.env*.local
+.env.*
+!.env.example
 
 # Debug logs
 npm-debug.log*
