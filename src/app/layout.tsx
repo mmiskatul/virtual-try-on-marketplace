@@ -24,30 +24,32 @@ const jetbrainsMono = JetBrains_Mono({
   variable: '--font-mono',
 });
 
-const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || process.env.NEXTAUTH_URL || 'https://v-try.fashion';
+const siteUrl =
+  process.env.NEXT_PUBLIC_SITE_URL ||
+  process.env.NEXTAUTH_URL ||
+  (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'http://localhost:3000');
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
   title: {
-    default: 'V-TRY | Multi-Brand AI Fashion Marketplace',
+    default: 'V-TRY | Multi-Brand AI Virtual Try-On Fashion Marketplace',
     template: '%s | V-TRY Marketplace',
   },
   description:
-    'Experience high-fidelity AI virtual fitting room across luxury fashion brands. Discover designer slip dresses, structural blazers, and luxury silks with real-time neural drape simulation.',
+    'Discover independent clothing brands, browse editorial collections, and experience AI-powered virtual try-on before you buy.',
   keywords: [
     'Virtual Try-On',
-    'AI Fashion',
+    'AI Fashion Marketplace',
+    'Multi-Brand Storefronts',
     'Online Fitting Room',
-    'Haute Couture',
-    'Luxury Apparel',
     'VITON-HD',
-    'Multi-Tenant Marketplace',
-    'Silk Slip Dresses',
-    'Designer Blazers',
+    'Menswear',
+    'Womenswear',
+    'Traditional Wear',
   ],
-  authors: [{ name: 'V-TRY Central Fashion Platform', url: siteUrl }],
-  creator: 'V-TRY Platform Inc.',
-  publisher: 'V-TRY Platform Inc.',
+  authors: [{ name: 'V-TRY Central Fashion Marketplace', url: siteUrl }],
+  creator: 'V-TRY Platform',
+  publisher: 'V-TRY Platform',
   formatDetection: {
     email: false,
     address: false,
@@ -61,9 +63,9 @@ export const metadata: Metadata = {
     locale: 'en_US',
     url: siteUrl,
     siteName: 'V-TRY Multi-Brand AI Fashion Marketplace',
-    title: 'V-TRY | Multi-Brand AI Virtual Try-On Fashion Marketplace',
+    title: 'V-TRY | Fashion That Fits You Before You Buy',
     description:
-      'Discover curated luxury fashion boutiques and try on garments virtually before purchase with deep neural flow synthesis.',
+      'Explore independent fashion brands and visualize garments on yourself with AI-powered virtual try-on.',
     images: [
       {
         url: 'https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?w=1200&auto=format&fit=crop&q=80',
@@ -75,21 +77,13 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'V-TRY | Multi-Brand AI Virtual Try-On Fashion Marketplace',
-    description: 'Experience zero-friction fashion with AI virtual try-on across independent boutiques.',
+    title: 'V-TRY | Multi-Brand AI Fashion Marketplace',
+    description: 'See how clothes from independent brands look on you before you buy.',
     images: ['https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?w=1200&auto=format&fit=crop&q=80'],
-    creator: '@VTryFashion',
   },
   robots: {
     index: true,
     follow: true,
-    googleBot: {
-      index: true,
-      follow: true,
-      'max-video-preview': -1,
-      'max-image-preview': 'large',
-      'max-snippet': -1,
-    },
   },
 };
 
@@ -103,18 +97,16 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`dark ${plusJakartaSans.variable} ${playfairDisplay.variable} ${jetbrainsMono.variable}`}
+      className={`${plusJakartaSans.variable} ${playfairDisplay.variable} ${jetbrainsMono.variable}`}
     >
       <head>
-        {/* Dynamic Cryptographic Nonce for Strict CSP Verification */}
         {nonce && <meta name="csp-nonce" content={nonce} />}
       </head>
       <body
-        className="min-h-screen bg-white text-gray-900 font-sans antialiased"
+        className="min-h-screen bg-[#FAF9F6] text-gray-900 font-sans antialiased"
         data-csp-protected={nonce ? 'true' : undefined}
       >
         <QueryProvider>
-          {/* Live Real User Monitoring (RUM) for Core Web Vitals */}
           <WebVitalReporter serviceName="vton-marketplace" />
           {children}
         </QueryProvider>
