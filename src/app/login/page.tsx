@@ -1,19 +1,12 @@
 'use client';
 
-import React, { Suspense, useEffect, useState } from 'react';
+import React, { Suspense } from 'react';
 import Link from 'next/link';
-import { useRouter, useSearchParams } from 'next/navigation';
-import { signIn, getProviders, getSession, useSession, signOut } from 'next-auth/react';
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { CheckCircle2, AlertCircle, MailCheck, Loader2, ArrowRight } from 'lucide-react';
-import { customerAuthSchema, CustomerAuthFormValues } from '../../lib/schemas';
-import { marketplaceApi, DevEmailPreview } from '../../lib/api';
+import { useSearchParams } from 'next/navigation';
+import { getSession, signOut, useSession } from 'next-auth/react';
+import { CheckCircle2 } from 'lucide-react';
 import { AuthShell } from '../../components/auth/AuthShell';
-import { PasswordField } from '../../components/auth/PasswordField';
-import { DevEmailPreviewCard } from '../../components/auth/DevEmailPreviewCard';
-import { Input } from '../../components/ui/input';
-import { Button } from '../../components/ui/button';
+import { CustomerEmailFlow } from '../../components/auth/CustomerEmailFlow';
 
 function sanitizeCallbackUrl(raw: string | null): string {
   if (!raw || !raw.startsWith('/') || raw.startsWith('//')) {
@@ -23,7 +16,6 @@ function sanitizeCallbackUrl(raw: string | null): string {
 }
 
 function LoginFormContent() {
-  const router = useRouter();
   const searchParams = useSearchParams();
   const { data: session } = useSession();
 
@@ -32,107 +24,16 @@ function LoginFormContent() {
   const resetParam = searchParams.get('reset');
   const prefillEmail = searchParams.get('email') || '';
 
-  const [errorMsg, setErrorMsg] = useState<string | null>(null);
-  const [needsVerificationEmail, setNeedsVerificationEmail] = useState<string | null>(null);
-  const [resendMessage, setResendMessage] = useState<string | null>(null);
-  const [resendLoading, setResendLoading] = useState(false);
-  const [devPreview, setDevPreview] = useState<DevEmailPreview | null>(null);
-  const [oauthProviders, setOauthProviders] = useState<{ google: boolean; github: boolean }>({
-    google: false,
-    github: false,
-  });
-
-  useEffect(() => {
-    getProviders()
-      .then((providers) => {
-        if (providers) {
-          setOauthProviders({
-            google: Boolean(providers.google),
-            github: Boolean(providers.github),
-          });
-        }
-      })
-      .catch(() => {});
-  }, []);
-
-  const {
-    register,
-    handleSubmit,
-    getValues,
-    formState: { errors, isSubmitting },
-  } = useForm<CustomerAuthFormValues>({
-    resolver: zodResolver(customerAuthSchema),
-    defaultValues: {
-      email: prefillEmail,
-      password: '',
-    },
-  });
-
-  const performLogin = async (email: string, password: string) => {
-    setErrorMsg(null);
-    setNeedsVerificationEmail(null);
-    setResendMessage(null);
-    setDevPreview(null);
-
-    const result = await signIn('credentials', {
-      redirect: false,
-      email,
-      password,
-    });
-
-    if (result?.error) {
-      if (result.error === 'EMAIL_NOT_VERIFIED') {
-        setNeedsVerificationEmail(email);
-        setErrorMsg('Your email address has not been verified yet. Please verify your email before signing in.');
-      } else if (result.error === 'SERVICE_UNAVAILABLE') {
-        setErrorMsg('Authentication server is unreachable. Please ensure the backend service is running on port 4000.');
-      } else {
-        setErrorMsg(result.error === 'CredentialsSignin' ? 'Invalid email or password.' : result.error);
-      }
-      return;
-    }
-
-    const updatedSession = await getSession();
-    if (updatedSession?.backendToken && typeof window !== 'undefined') {
-      localStorage.setItem('marketplace_token', updatedSession.backendToken);
-    }
-
-    router.push(callbackUrl);
-    router.refresh();
-  };
-
-  const onSubmit = async (data: CustomerAuthFormValues) => {
-    await performLogin(data.email, data.password);
-  };
-
-  const handleResendVerification = async () => {
-    const email = needsVerificationEmail || getValues('email');
-    if (!email) return;
-    setResendLoading(true);
-    setResendMessage(null);
-    try {
-      const res = await marketplaceApi.auth.resendVerification(email);
-      setResendMessage(res.message);
-      if (res.devPreview) {
-        setDevPreview(res.devPreview);
-      }
-    } catch (err: any) {
-      setErrorMsg(err?.message || 'Could not resend verification email.');
-    } finally {
-      setResendLoading(false);
-    }
-  };
-
   return (
     <AuthShell
-      title="Sign in to V-TRY Studio"
-      subtitle="Access your saved AI fitting looks, wishlist, and checkout seamlessly."
+      title="Welcome to V-TRY Studio"
+      subtitle="Sign in with Google or continue with your email to shop and try on styles."
       badge="Customer Account"
       footer={
         <p>
-          New to V-TRY Studio?{' '}
-          <Link href="/register" className="text-black hover:text-gray-700 font-semibold">
-            Create a free account
+          Need help?{' '}
+          <Link href="/forgot-password" className="text-black hover:text-gray-700 font-semibold">
+            Reset password
           </Link>
         </p>
       }
@@ -152,9 +53,10 @@ function LoginFormContent() {
             </Link>
             <button
               type="button"
-              onClick={() => {
+              onClick={async () => {
                 if (typeof window !== 'undefined') localStorage.removeItem('marketplace_token');
-                signOut({ redirect: false });
+                await signOut({ redirect: false });
+                await getSession();
               }}
               className="px-2.5 py-1.5 rounded-lg bg-gray-100 hover:bg-gray-200 text-gray-700"
             >
@@ -167,122 +69,18 @@ function LoginFormContent() {
       {verifiedParam === '1' && (
         <div className="p-3 rounded-xl bg-emerald-500/15 border border-emerald-500/30 text-emerald-700 text-xs flex items-center gap-2">
           <CheckCircle2 className="w-4 h-4 shrink-0" />
-          <span>Email verified successfully! You can now sign in.</span>
+          <span>Email verified successfully! Continue below to enter the marketplace.</span>
         </div>
       )}
 
       {resetParam === '1' && (
         <div className="p-3 rounded-xl bg-emerald-500/15 border border-emerald-500/30 text-emerald-700 text-xs flex items-center gap-2">
           <CheckCircle2 className="w-4 h-4 shrink-0" />
-          <span>Password updated successfully! Sign in with your new password.</span>
+          <span>Password updated successfully! Enter your email to sign in.</span>
         </div>
       )}
 
-      {(oauthProviders.google || oauthProviders.github) && (
-        <>
-          <div className="space-y-2">
-            {oauthProviders.google && (
-              <button
-                type="button"
-                onClick={() => signIn('google', { callbackUrl })}
-                className="w-full py-2.5 px-4 rounded-xl bg-gray-100 hover:bg-gray-200 border border-gray-300 text-gray-900 font-semibold text-xs flex items-center justify-center gap-2.5 transition-colors"
-              >
-                Continue with Google
-              </button>
-            )}
-            {oauthProviders.github && (
-              <button
-                type="button"
-                onClick={() => signIn('github', { callbackUrl })}
-                className="w-full py-2.5 px-4 rounded-xl bg-gray-100 hover:bg-gray-200 border border-gray-300 text-gray-900 font-semibold text-xs flex items-center justify-center gap-2.5 transition-colors"
-              >
-                Continue with GitHub
-              </button>
-            )}
-          </div>
-          <div className="relative flex items-center justify-center">
-            <div className="border-t border-gray-200 w-full" />
-            <span className="bg-white px-3 text-[10px] text-gray-500 uppercase font-mono">or sign in with email</span>
-            <div className="border-t border-gray-200 w-full" />
-          </div>
-        </>
-      )}
-
-      <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-        {errorMsg && (
-          <div className="p-3 rounded-xl bg-rose-500/15 border border-rose-500/30 text-rose-700 text-xs space-y-2">
-            <div className="flex items-start gap-2">
-              <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
-              <span>{errorMsg}</span>
-            </div>
-            {needsVerificationEmail && (
-              <div className="flex flex-wrap items-center gap-2 pt-1">
-                <button
-                  type="button"
-                  onClick={handleResendVerification}
-                  disabled={resendLoading}
-                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-rose-500/20 hover:bg-rose-500/30 text-rose-800 font-semibold transition-colors"
-                >
-                  {resendLoading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <MailCheck className="w-3.5 h-3.5" />}
-                  <span>Resend Verification Email</span>
-                </button>
-                <Link
-                  href={`/verify-email?email=${encodeURIComponent(needsVerificationEmail)}`}
-                  className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-gray-100 hover:bg-gray-200 text-gray-900 font-semibold transition-colors"
-                >
-                  <span>Enter 6-Digit Code</span>
-                  <ArrowRight className="w-3 h-3" />
-                </Link>
-              </div>
-            )}
-          </div>
-        )}
-
-        {resendMessage && (
-          <div className="p-3 rounded-xl bg-gray-100 border border-gray-300 text-black text-xs">
-            {resendMessage}
-          </div>
-        )}
-
-        <DevEmailPreviewCard preview={devPreview} actionLabel="Verify Email Now" />
-
-        <div className="space-y-1">
-          <label className="block text-xs font-medium text-gray-700">Email Address</label>
-          <Input
-            type="email"
-            placeholder="you@example.com"
-            autoComplete="email"
-            {...register('email')}
-            className={errors.email ? 'border-rose-500 focus-visible:border-rose-500' : ''}
-          />
-          {errors.email && <p className="text-rose-600 text-[11px] font-medium">{errors.email.message}</p>}
-        </div>
-
-        <PasswordField
-          label="Password"
-          placeholder="Enter your password"
-          autoComplete="current-password"
-          error={errors.password?.message}
-          rightSlot={
-            <Link href="/forgot-password" className="text-[11px] text-black hover:text-gray-700 font-medium">
-              Forgot password?
-            </Link>
-          }
-          {...register('password')}
-        />
-
-        <Button type="submit" disabled={isSubmitting} className="w-full font-bold">
-          {isSubmitting ? (
-            <span className="inline-flex items-center gap-2">
-              <Loader2 className="w-4 h-4 animate-spin" />
-              Signing In...
-            </span>
-          ) : (
-            'Sign In'
-          )}
-        </Button>
-
-      </form>
+      <CustomerEmailFlow callbackUrl={callbackUrl} initialEmail={prefillEmail} />
     </AuthShell>
   );
 }
@@ -294,4 +92,3 @@ export default function CustomerLoginPage() {
     </Suspense>
   );
 }
-

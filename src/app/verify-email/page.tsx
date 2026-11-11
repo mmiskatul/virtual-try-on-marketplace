@@ -2,7 +2,8 @@
 
 import React, { Suspense, useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
-import { useSearchParams } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
+import { signIn } from 'next-auth/react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { CheckCircle2, AlertCircle, Loader2, Mail, ShieldCheck, ArrowRight } from 'lucide-react';
@@ -13,10 +14,19 @@ import { DevEmailPreviewCard } from '../../components/auth/DevEmailPreviewCard';
 import { Input } from '../../components/ui/input';
 import { Button } from '../../components/ui/button';
 
+function sanitizeCallbackUrl(raw: string | null): string {
+  if (!raw || !raw.startsWith('/') || raw.startsWith('//')) {
+    return '/';
+  }
+  return raw;
+}
+
 function VerifyEmailContent() {
+  const router = useRouter();
   const searchParams = useSearchParams();
   const urlToken = searchParams.get('token');
   const urlEmail = searchParams.get('email') || '';
+  const callbackUrl = sanitizeCallbackUrl(searchParams.get('callbackUrl'));
 
   const [status, setStatus] = useState<'idle' | 'verifying' | 'verified' | 'error'>(
     urlToken ? 'verifying' : 'idle'
@@ -31,6 +41,7 @@ function VerifyEmailContent() {
     register,
     handleSubmit,
     getValues,
+    setValue,
     formState: { errors, isSubmitting },
   } = useForm<VerifyEmailFormValues>({
     resolver: zodResolver(verifyEmailSchema),
@@ -40,11 +51,50 @@ function VerifyEmailContent() {
     },
   });
 
+  // Load any verification preview code generated on the previous registration step
+  useEffect(() => {
+    if (!urlEmail || typeof window === 'undefined') return;
+    try {
+      const raw = sessionStorage.getItem(`vton_pending_verify_${urlEmail.toLowerCase()}`);
+      if (raw) {
+        const parsed = JSON.parse(raw) as DevEmailPreview;
+        setDevPreview(parsed);
+        if (parsed.otpCode) {
+          setValue('code', parsed.otpCode);
+        }
+      }
+    } catch {
+      // ignore storage errors
+    }
+  }, [urlEmail, setValue]);
+
   useEffect(() => {
     if (cooldown <= 0) return;
     const timer = setTimeout(() => setCooldown((c) => c - 1), 1000);
     return () => clearTimeout(timer);
   }, [cooldown]);
+
+  const completeAutoSignIn = async (token?: string, emailForStorage?: string) => {
+    if (typeof window !== 'undefined' && emailForStorage) {
+      try {
+        sessionStorage.removeItem(`vton_pending_verify_${emailForStorage.toLowerCase()}`);
+      } catch {
+        // ignore
+      }
+    }
+    if (!token) return;
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('marketplace_token', token);
+    }
+    await signIn('credentials', {
+      redirect: false,
+      verifiedToken: token,
+    });
+    setTimeout(() => {
+      router.push(callbackUrl);
+      router.refresh();
+    }, 800);
+  };
 
   useEffect(() => {
     if (!urlToken || attemptedAutoToken.current) return;
@@ -53,9 +103,10 @@ function VerifyEmailContent() {
 
     marketplaceApi.auth
       .verifyEmail({ token: urlToken })
-      .then((res) => {
+      .then(async (res) => {
         setStatus('verified');
         setMessage(res.message);
+        await completeAutoSignIn(res.token, res.user?.email || urlEmail);
       })
       .catch((err: any) => {
         setStatus('error');
@@ -72,6 +123,7 @@ function VerifyEmailContent() {
       });
       setStatus('verified');
       setMessage(res.message);
+      await completeAutoSignIn(res.token, data.email);
     } catch (err: any) {
       setStatus('error');
       setMessage(err?.message || 'Invalid or expired verification code.');
@@ -99,6 +151,9 @@ function VerifyEmailContent() {
       }
       if (res.devPreview) {
         setDevPreview(res.devPreview);
+        if (res.devPreview.otpCode) {
+          setValue('code', res.devPreview.otpCode);
+        }
       }
     } catch (err: any) {
       setStatus('error');
@@ -122,23 +177,23 @@ function VerifyEmailContent() {
   if (status === 'verified') {
     return (
       <AuthShell
-        title="Email verified!"
-        subtitle="Your customer account is now active and ready for sign-in."
+        title="Welcome to V-TRY Marketplace!"
+        subtitle="Your customer account is verified and signed in."
         badge="Verified Account"
       >
         <div className="p-4 rounded-2xl bg-emerald-500/15 border border-emerald-500/30 text-emerald-700 text-xs flex items-start gap-2.5">
           <CheckCircle2 className="w-5 h-5 shrink-0 mt-0.5" />
           <div className="space-y-1">
-            <p className="font-bold text-gray-900">Verification complete</p>
-            <p>{message || 'Your email has been verified successfully.'}</p>
+            <p className="font-bold text-gray-900">Registration complete</p>
+            <p>{message || 'Your email has been verified. Redirecting you to the marketplace...'}</p>
           </div>
         </div>
 
         <Link
-          href={`/login?verified=1${urlEmail ? `&email=${encodeURIComponent(urlEmail)}` : ''}`}
+          href={callbackUrl}
           className="w-full h-10 px-4 rounded-xl bg-black hover:bg-gray-800 text-white font-bold text-xs inline-flex items-center justify-center gap-2 shadow-lg shadow-black/10 transition-all"
         >
-          <span>Continue to Sign In</span>
+          <span>Enter Marketplace</span>
           <ArrowRight className="w-4 h-4" />
         </Link>
       </AuthShell>
@@ -147,14 +202,14 @@ function VerifyEmailContent() {
 
   return (
     <AuthShell
-      title="Verify your email address"
-      subtitle="Enter the 6-digit code sent to your inbox, or click the link in your verification email."
-      badge="Email Verification"
+      title="Enter Verification Code"
+      subtitle="Enter the 6-digit verification code sent to your email to complete marketplace registration."
+      badge="Step 3 • Verify Email"
       footer={
         <p>
-          Already verified?{' '}
+          Wrong email?{' '}
           <Link href="/login" className="text-black hover:text-gray-700 font-semibold">
-            Sign in
+            Start over
           </Link>
         </p>
       }
@@ -172,7 +227,7 @@ function VerifyEmailContent() {
         </div>
       )}
 
-      <DevEmailPreviewCard preview={devPreview} actionLabel="Verify with New Link" />
+      <DevEmailPreviewCard preview={devPreview} actionLabel="Verify with Direct Link" />
 
       <form onSubmit={handleSubmit(onSubmitCode)} className="space-y-4">
         <div className="space-y-1">
@@ -203,7 +258,7 @@ function VerifyEmailContent() {
 
         <Button type="submit" disabled={isSubmitting} className="w-full font-bold gap-2">
           {isSubmitting ? <Loader2 className="w-4 h-4 animate-spin" /> : <ShieldCheck className="w-4 h-4" />}
-          <span>{isSubmitting ? 'Verifying...' : 'Verify Email'}</span>
+          <span>{isSubmitting ? 'Verifying & Signing In...' : 'Verify & Register for Marketplace'}</span>
         </Button>
 
         <Button
@@ -215,7 +270,7 @@ function VerifyEmailContent() {
         >
           {resending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Mail className="w-4 h-4" />}
           <span>
-            {cooldown > 0 ? `Resend available in ${cooldown}s` : 'Resend Verification Email'}
+            {cooldown > 0 ? `Resend available in ${cooldown}s` : 'Resend Verification Code'}
           </span>
         </Button>
       </form>
@@ -230,4 +285,3 @@ export default function CustomerVerifyEmailPage() {
     </Suspense>
   );
 }
-

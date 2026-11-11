@@ -5,15 +5,43 @@ import GitHubProvider from 'next-auth/providers/github';
 
 const BACKEND_API_URL =
   process.env.NEXT_PUBLIC_BACKEND_API_URL || 'http://localhost:4000';
+const INTERNAL_SERVICE_KEY =
+  process.env.INTERNAL_SERVICE_KEY || 'vton_internal_service_key_dev';
 
 const providers: NextAuthOptions['providers'] = [
   CredentialsProvider({
     name: 'Customer Account',
     credentials: {
       email: { label: 'Email', type: 'email', placeholder: 'customer@example.com' },
-      password: { label: 'Password', type: 'password' }
+      password: { label: 'Password', type: 'password' },
+      verifiedToken: { label: 'Verified Token', type: 'text' },
     },
     async authorize(credentials) {
+      // Verified OTP token handoff immediately after /verify-email
+      if (credentials?.verifiedToken) {
+        let meRes: Response;
+        try {
+          meRes = await fetch(`${BACKEND_API_URL}/api/v1/marketplace/auth/me`, {
+            headers: { Authorization: `Bearer ${credentials.verifiedToken}` },
+          });
+        } catch {
+          throw new Error('SERVICE_UNAVAILABLE');
+        }
+        const meData = await meRes.json().catch(() => ({}));
+        if (!meRes.ok || !meData?.user) {
+          throw new Error('Invalid or expired verification session.');
+        }
+        return {
+          id: meData.user.id,
+          name: meData.user.name,
+          email: meData.user.email,
+          image: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150',
+          role: meData.user.role || 'CUSTOMER',
+          emailVerified: Boolean(meData.user.emailVerified),
+          backendToken: credentials.verifiedToken,
+        };
+      }
+
       if (!credentials?.email || !credentials?.password) {
         throw new Error('Email and password are required.');
       }
@@ -89,7 +117,29 @@ export const authOptions: NextAuthOptions = {
     maxAge: 30 * 24 * 60 * 60 // 30 days
   },
   callbacks: {
-    async jwt({ token, user }) {
+    async jwt({ token, user, account }) {
+      if (account?.provider === 'google' && user?.email) {
+        try {
+          const syncRes = await fetch(`${BACKEND_API_URL}/api/v1/marketplace/auth/oauth-google`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'X-Service-Key': INTERNAL_SERVICE_KEY,
+            },
+            body: JSON.stringify({ email: user.email, name: user.name }),
+          });
+          if (syncRes.ok) {
+            const syncData = await syncRes.json();
+            token.id = syncData.user?.id || token.id;
+            token.role = syncData.user?.role || 'CUSTOMER';
+            token.backendToken = syncData.token;
+            token.emailVerified = true;
+            return token;
+          }
+        } catch {
+          // Keep standard NextAuth OAuth session if backend sync is temporarily unavailable
+        }
+      }
       if (user) {
         token.id = user.id;
         token.role = user.role || 'CUSTOMER';

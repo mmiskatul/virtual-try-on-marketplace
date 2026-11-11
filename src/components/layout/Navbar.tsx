@@ -159,7 +159,7 @@ export function Navbar({
           </div>
 
           {/* Center: Editorial Links (Desktop) */}
-          <nav className="hidden lg:flex items-center gap-5 text-xs font-semibold text-stone-600">
+          <nav className="hidden lg:flex items-center gap-3.5 xl:gap-5 text-xs font-semibold text-stone-600 shrink-0">
             {NAV_LINKS.map((item) => {
               const active =
                 item.href === '/'
@@ -191,9 +191,9 @@ export function Navbar({
           </nav>
 
           {/* Right: Search + Notifications + Favorites + Cart + Account */}
-          <div className="flex items-center gap-1.5 sm:gap-2.5">
+          <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
             {/* Search Box */}
-            <div ref={searchWrapperRef} className="relative hidden md:block w-52 xl:w-64">
+            <div ref={searchWrapperRef} className="relative hidden md:block w-40 lg:w-44 xl:w-56 shrink-0">
               <form
                 onSubmit={(e) => {
                   e.preventDefault();
@@ -448,20 +448,20 @@ export function Navbar({
                 )}
               </div>
             ) : (
-              <div className="flex items-center gap-1.5">
+              <div className="flex items-center gap-2 shrink-0">
                 <Link
                   href="/register"
-                  className="hidden sm:inline-flex items-center gap-1 px-3 py-1.5 rounded-full border border-stone-200 bg-white hover:bg-stone-100 text-xs font-semibold text-stone-800 transition-colors"
+                  className="hidden sm:inline-flex items-center justify-center gap-1.5 h-9 px-3.5 rounded-full border border-stone-200 bg-white hover:bg-stone-100 text-xs font-semibold text-stone-800 whitespace-nowrap shrink-0 transition-colors"
                 >
-                  <UserPlus className="w-3.5 h-3.5" />
+                  <UserPlus className="w-3.5 h-3.5 shrink-0" />
                   <span>Join</span>
                 </Link>
                 <button
                   type="button"
                   onClick={() => setIsAuthModalOpen(true)}
-                  className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-stone-950 hover:bg-stone-800 text-white text-xs font-semibold transition-colors"
+                  className="inline-flex items-center justify-center gap-1.5 h-9 px-4 rounded-full bg-stone-950 hover:bg-stone-800 text-white text-xs font-semibold whitespace-nowrap shrink-0 shadow-sm transition-colors"
                 >
-                  <User className="w-3.5 h-3.5" />
+                  <User className="w-3.5 h-3.5 shrink-0" />
                   <span>Sign In</span>
                 </button>
               </div>

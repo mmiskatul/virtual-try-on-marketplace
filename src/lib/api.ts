@@ -52,6 +52,20 @@ async function request<T>(url: string, options: RequestInit = {}): Promise<T> {
 export const marketplaceApi = {
   // Authentication & Account Recovery
   auth: {
+    checkEmail: (email: string) => {
+      return request<{
+        exists: boolean;
+        portalMismatch?: boolean;
+        email: string;
+        name?: string;
+        emailVerified?: boolean;
+        message?: string;
+      }>(`${MARKETPLACE_API_URL}/api/v1/marketplace/auth/check-email`, {
+        method: 'POST',
+        body: JSON.stringify({ email })
+      });
+    },
+
     register: (payload: { name: string; email: string; password: string }) => {
       return request<{
         message: string;
@@ -79,6 +93,8 @@ export const marketplaceApi = {
       return request<{
         message: string;
         user: { id: string; name: string; email: string; role: string; emailVerified: boolean };
+        token?: string;
+        sessionId?: string;
       }>(`${MARKETPLACE_API_URL}/api/v1/marketplace/auth/verify-email`, {
         method: 'POST',
         body: JSON.stringify(payload)
