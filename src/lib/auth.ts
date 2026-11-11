@@ -5,8 +5,7 @@ import GitHubProvider from 'next-auth/providers/github';
 
 const BACKEND_API_URL =
   process.env.NEXT_PUBLIC_BACKEND_API_URL || 'http://localhost:4000';
-const INTERNAL_SERVICE_KEY =
-  process.env.INTERNAL_SERVICE_KEY || 'vton_internal_service_key_dev';
+const INTERNAL_SERVICE_KEY = process.env.INTERNAL_SERVICE_KEY || '';
 
 const providers: NextAuthOptions['providers'] = [
   CredentialsProvider({
@@ -118,7 +117,7 @@ export const authOptions: NextAuthOptions = {
   },
   callbacks: {
     async jwt({ token, user, account }) {
-      if (account?.provider === 'google' && user?.email) {
+      if (account?.provider === 'google' && user?.email && INTERNAL_SERVICE_KEY) {
         try {
           const syncRes = await fetch(`${BACKEND_API_URL}/api/v1/marketplace/auth/oauth-google`, {
             method: 'POST',
@@ -158,5 +157,5 @@ export const authOptions: NextAuthOptions = {
       return session;
     }
   },
-  secret: process.env.NEXTAUTH_SECRET || 'vton-marketplace-fallback-secret-key-32chars'
+  secret: process.env.NEXTAUTH_SECRET
 };

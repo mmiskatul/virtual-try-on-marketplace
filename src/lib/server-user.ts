@@ -31,15 +31,16 @@ export interface PublicCustomerDTO {
  */
 export async function getTaintedCustomerRecord(customerId: string): Promise<RawCustomerRecord> {
   // In production, retrieved from secure backend data layer
+  const runtimeSuffix = crypto.randomUUID().replace(/-/g, '');
   const rawCustomer: RawCustomerRecord = {
     id: customerId,
     name: 'Sarah Miller',
     email: 'sarah.miller@example.com',
     image: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150',
     role: 'CUSTOMER',
-    passwordHash: '$argon2id$v=19$m=65536,t=3,p=4$c29tZXNhbHQ$qU8wP9K8g7j6h5f4d3s2a1',
-    stripeCustomerId: 'cus_vton_live_948271034',
-    twoFactorSecret: 'JBSWY3DPEHPK3PXP47',
+    passwordHash: `ephemeral_hash_${runtimeSuffix}`,
+    stripeCustomerId: `ephemeral_cus_${runtimeSuffix}`,
+    twoFactorSecret: `EPHEMERAL_2FA_${runtimeSuffix}`,
     internalBillingNotes: 'High-LTV customer; verified VIP try-on quota.',
   };
 

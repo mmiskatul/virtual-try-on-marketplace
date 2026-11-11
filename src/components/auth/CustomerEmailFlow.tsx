@@ -385,12 +385,12 @@ export function CustomerEmailFlow({
         </div>
       )}
 
-      <div className="relative flex items-center justify-center">
-        <div className="border-t border-gray-200 w-full" />
-        <span className="bg-white px-3 text-[10px] text-gray-500 uppercase font-mono tracking-wider">
+      <div className="flex items-center gap-3">
+        <div className="h-px flex-1 bg-gray-200" />
+        <span className="text-[10px] text-gray-500 uppercase font-mono tracking-wider whitespace-nowrap shrink-0">
           or continue with email
         </span>
-        <div className="border-t border-gray-200 w-full" />
+        <div className="h-px flex-1 bg-gray-200" />
       </div>
 
       {/* Option 2: Email input + Forgot Password right on Step 1 */}

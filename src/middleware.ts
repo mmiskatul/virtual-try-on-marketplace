@@ -166,7 +166,7 @@ export async function middleware(request: NextRequest) {
   // 4. Edge Token & Session Verification using NextAuth JWT
   const token = await getToken({
     req: request,
-    secret: process.env.NEXTAUTH_SECRET || 'vton-marketplace-fallback-secret-key-32chars',
+    secret: process.env.NEXTAUTH_SECRET,
   });
 
   const isProtectedRoute = PROTECTED_ROUTES.some((route) => pathname.startsWith(route));

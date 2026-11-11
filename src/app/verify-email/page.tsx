@@ -6,7 +6,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { signIn } from 'next-auth/react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { CheckCircle2, AlertCircle, Loader2, Mail, ShieldCheck, ArrowRight } from 'lucide-react';
+import { CheckCircle2, AlertCircle, Loader2, Mail, ShieldCheck, ArrowRight, Lock, X } from 'lucide-react';
 import { verifyEmailSchema, VerifyEmailFormValues } from '../../lib/schemas';
 import { marketplaceApi, DevEmailPreview } from '../../lib/api';
 import { AuthShell } from '../../components/auth/AuthShell';
@@ -26,6 +26,8 @@ function VerifyEmailContent() {
   const searchParams = useSearchParams();
   const urlToken = searchParams.get('token');
   const urlEmail = searchParams.get('email') || '';
+  const fromRegister = searchParams.get('from') === 'register';
+  const isEmailLocked = Boolean(urlEmail);
   const callbackUrl = sanitizeCallbackUrl(searchParams.get('callbackUrl'));
 
   const [status, setStatus] = useState<'idle' | 'verifying' | 'verified' | 'error'>(
@@ -35,6 +37,11 @@ function VerifyEmailContent() {
   const [resending, setResending] = useState(false);
   const [cooldown, setCooldown] = useState(0);
   const [devPreview, setDevPreview] = useState<DevEmailPreview | null>(null);
+  const [toastMsg, setToastMsg] = useState<string | null>(
+    fromRegister && urlEmail
+      ? `Verification code sent to ${urlEmail}. Check your inbox (or spam folder) and enter the 6-digit code below.`
+      : null
+  );
   const attemptedAutoToken = useRef(false);
 
   const {
@@ -67,6 +74,12 @@ function VerifyEmailContent() {
       // ignore storage errors
     }
   }, [urlEmail, setValue]);
+
+  useEffect(() => {
+    if (!toastMsg) return;
+    const t = setTimeout(() => setToastMsg(null), 6000);
+    return () => clearTimeout(t);
+  }, [toastMsg]);
 
   useEffect(() => {
     if (cooldown <= 0) return;
@@ -116,14 +129,15 @@ function VerifyEmailContent() {
 
   const onSubmitCode = async (data: VerifyEmailFormValues) => {
     setMessage(null);
+    const targetEmail = isEmailLocked ? urlEmail : data.email;
     try {
       const res = await marketplaceApi.auth.verifyEmail({
-        email: data.email,
+        email: targetEmail,
         code: data.code,
       });
       setStatus('verified');
       setMessage(res.message);
-      await completeAutoSignIn(res.token, data.email);
+      await completeAutoSignIn(res.token, targetEmail);
     } catch (err: any) {
       setStatus('error');
       setMessage(err?.message || 'Invalid or expired verification code.');
@@ -142,11 +156,12 @@ function VerifyEmailContent() {
     setMessage(null);
     try {
       const res = await marketplaceApi.auth.resendVerification(email);
-      setMessage(res.message);
       if (res.alreadyVerified) {
         setStatus('verified');
+        setMessage(res.message);
       } else {
         setStatus('idle');
+        setToastMsg(res.message || `New verification code sent to ${email}.`);
         setCooldown(30);
       }
       if (res.devPreview) {
@@ -201,44 +216,85 @@ function VerifyEmailContent() {
   }
 
   return (
-    <AuthShell
-      title="Enter Verification Code"
-      subtitle="Enter the 6-digit verification code sent to your email to complete marketplace registration."
-      badge="Step 3 • Verify Email"
-      footer={
-        <p>
-          Wrong email?{' '}
-          <Link href="/login" className="text-black hover:text-gray-700 font-semibold">
-            Start over
-          </Link>
-        </p>
-      }
-    >
-      {message && (
+    <>
+      {toastMsg && (
         <div
-          className={`p-3 rounded-xl text-xs flex items-start gap-2 border ${
-            status === 'error'
-              ? 'bg-rose-500/15 border-rose-500/30 text-rose-700'
-              : 'bg-gray-100 border-gray-300 text-black'
-          }`}
+          role="status"
+          aria-live="polite"
+          className="fixed top-5 right-5 z-50 max-w-sm w-[calc(100vw-2.5rem)] rounded-2xl border border-emerald-200 bg-white/95 backdrop-blur-md shadow-xl p-3.5 text-xs flex items-start gap-2.5 animate-in fade-in slide-in-from-top-2 duration-200"
         >
-          {status === 'error' ? <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" /> : <Mail className="w-4 h-4 shrink-0 mt-0.5" />}
-          <span>{message}</span>
+          <div className="w-7 h-7 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-700 flex items-center justify-center shrink-0">
+            <Mail className="w-3.5 h-3.5" />
+          </div>
+          <p className="text-stone-800 leading-relaxed flex-1 pt-0.5">{toastMsg}</p>
+          <button
+            type="button"
+            onClick={() => setToastMsg(null)}
+            aria-label="Dismiss notification"
+            className="text-stone-400 hover:text-stone-800 p-1 rounded-lg transition-colors shrink-0"
+          >
+            <X className="w-3.5 h-3.5" />
+          </button>
         </div>
       )}
+
+      <AuthShell
+        title="Enter Verification Code"
+        subtitle="Enter the 6-digit verification code sent to your email to complete marketplace registration."
+        badge="Step 3 • Verify Email"
+        footer={
+          <p>
+            Wrong email?{' '}
+            <Link href="/login" className="text-black hover:text-gray-700 font-semibold">
+              Start over
+            </Link>
+          </p>
+        }
+      >
+        {message && (
+          <div
+            className={`p-3 rounded-xl text-xs flex items-start gap-2 border ${
+              status === 'error'
+                ? 'bg-rose-500/15 border-rose-500/30 text-rose-700'
+                : 'bg-gray-100 border-gray-300 text-black'
+            }`}
+          >
+            {status === 'error' ? <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" /> : <Mail className="w-4 h-4 shrink-0 mt-0.5" />}
+            <span>{message}</span>
+          </div>
+        )}
 
       <DevEmailPreviewCard preview={devPreview} actionLabel="Verify with Direct Link" />
 
       <form onSubmit={handleSubmit(onSubmitCode)} className="space-y-4">
         <div className="space-y-1">
-          <label className="block text-xs font-medium text-gray-700">Email Address</label>
-          <Input
-            type="email"
-            placeholder="you@example.com"
-            {...register('email')}
-            className={errors.email ? 'border-rose-500 focus-visible:border-rose-500' : ''}
-          />
-          {errors.email && <p className="text-rose-600 text-[11px] font-medium">{errors.email.message}</p>}
+          <div className="flex items-center justify-between">
+            <label className="block text-xs font-medium text-gray-700">Email Address</label>
+            {isEmailLocked && (
+              <Link href="/login" className="text-[11px] font-medium text-gray-500 hover:text-black">
+                Use different email
+              </Link>
+            )}
+          </div>
+          {isEmailLocked ? (
+            <>
+              <input type="hidden" {...register('email')} value={urlEmail} />
+              <div className="flex items-center justify-between h-10 px-3 rounded-xl border border-stone-200 bg-stone-100 text-sm text-stone-700 cursor-not-allowed select-none">
+                <span className="truncate font-medium">{urlEmail}</span>
+                <Lock className="w-3.5 h-3.5 text-stone-400 shrink-0 ml-2" aria-label="Locked email" />
+              </div>
+            </>
+          ) : (
+            <>
+              <Input
+                type="email"
+                placeholder="you@example.com"
+                {...register('email')}
+                className={errors.email ? 'border-rose-500 focus-visible:border-rose-500' : ''}
+              />
+              {errors.email && <p className="text-rose-600 text-[11px] font-medium">{errors.email.message}</p>}
+            </>
+          )}
         </div>
 
         <div className="space-y-1">
@@ -247,7 +303,7 @@ function VerifyEmailContent() {
             type="text"
             inputMode="numeric"
             maxLength={6}
-            placeholder="123456"
+            placeholder="• • • • • •"
             {...register('code')}
             className={`font-mono text-center text-base tracking-[0.4em] ${
               errors.code ? 'border-rose-500 focus-visible:border-rose-500' : ''
@@ -274,7 +330,8 @@ function VerifyEmailContent() {
           </span>
         </Button>
       </form>
-    </AuthShell>
+      </AuthShell>
+    </>
   );
 }
 
