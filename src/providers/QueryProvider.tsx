@@ -1,8 +1,21 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { SessionProvider } from 'next-auth/react';
+import { SessionProvider, useSession } from 'next-auth/react';
+
+function SessionTokenSync() {
+  const { data: session, status } = useSession();
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    if (status === 'authenticated' && session?.backendToken) {
+      localStorage.setItem('marketplace_token', session.backendToken);
+    }
+  }, [session?.backendToken, status]);
+
+  return null;
+}
 
 export function QueryProvider({ children }: { children: React.ReactNode }) {
   const [queryClient] = useState(
@@ -21,6 +34,7 @@ export function QueryProvider({ children }: { children: React.ReactNode }) {
 
   return (
     <SessionProvider>
+      <SessionTokenSync />
       <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
     </SessionProvider>
   );

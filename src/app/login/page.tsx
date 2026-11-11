@@ -15,6 +15,23 @@ function sanitizeCallbackUrl(raw: string | null): string {
   return raw;
 }
 
+function formatAuthError(code: string | null): string | null {
+  if (!code) return null;
+  switch (code) {
+    case 'PortalMismatch':
+      return 'This Google email belongs to a Brand or Admin account. Please sign in on that portal.';
+    case 'GoogleSyncFailed':
+      return 'Unable to complete Google sign-in with the backend. Please try again.';
+    case 'AccessDenied':
+      return 'Google sign-in was cancelled or denied.';
+    case 'OAuthSignin':
+    case 'OAuthCallback':
+      return 'Google OAuth failed. Check GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET, and your redirect URI in Google Cloud Console.';
+    default:
+      return 'Sign-in could not be completed. Please try again.';
+  }
+}
+
 function LoginFormContent() {
   const searchParams = useSearchParams();
   const { data: session } = useSession();
@@ -23,6 +40,7 @@ function LoginFormContent() {
   const verifiedParam = searchParams.get('verified');
   const resetParam = searchParams.get('reset');
   const prefillEmail = searchParams.get('email') || '';
+  const initialError = formatAuthError(searchParams.get('error'));
 
   return (
     <AuthShell
@@ -80,7 +98,11 @@ function LoginFormContent() {
         </div>
       )}
 
-      <CustomerEmailFlow callbackUrl={callbackUrl} initialEmail={prefillEmail} />
+      <CustomerEmailFlow
+        callbackUrl={callbackUrl}
+        initialEmail={prefillEmail}
+        initialError={initialError}
+      />
     </AuthShell>
   );
 }

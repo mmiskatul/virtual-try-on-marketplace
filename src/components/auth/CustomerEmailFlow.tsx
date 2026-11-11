@@ -15,6 +15,7 @@ export type AuthFlowStep = 'choose_method' | 'create_password' | 'sign_in';
 interface CustomerEmailFlowProps {
   callbackUrl?: string;
   initialEmail?: string;
+  initialError?: string | null;
   onAuthenticated?: () => void;
   onNavigate?: () => void;
 }
@@ -22,6 +23,7 @@ interface CustomerEmailFlowProps {
 export function CustomerEmailFlow({
   callbackUrl = '/',
   initialEmail = '',
+  initialError = null,
   onAuthenticated,
   onNavigate,
 }: CustomerEmailFlowProps) {
@@ -33,9 +35,14 @@ export function CustomerEmailFlow({
   const [confirmPassword, setConfirmPassword] = useState('');
 
   const [loading, setLoading] = useState(false);
-  const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const [googleLoading, setGoogleLoading] = useState(false);
+  const [errorMsg, setErrorMsg] = useState<string | null>(initialError);
   const [googleNotice, setGoogleNotice] = useState<string | null>(null);
   const [googleConfigured, setGoogleConfigured] = useState(false);
+
+  useEffect(() => {
+    setErrorMsg(initialError || null);
+  }, [initialError]);
 
   useEffect(() => {
     getProviders()
@@ -61,11 +68,16 @@ export function CustomerEmailFlow({
     setErrorMsg(null);
     setGoogleNotice(null);
     if (googleConfigured) {
-      await signIn('google', { callbackUrl });
+      setGoogleLoading(true);
+      try {
+        await signIn('google', { callbackUrl });
+      } finally {
+        setGoogleLoading(false);
+      }
       return;
     }
     setGoogleNotice(
-      'Google Sign-In is ready once GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET are added to marketplace/.env.local. Continue with your email below.'
+      'Google Sign-In is wired and ready. Add GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET to marketplace/.env and restart the dev server to sign in with Google.'
     );
   };
 
@@ -368,15 +380,25 @@ export function CustomerEmailFlow({
       <button
         type="button"
         onClick={handleGoogleContinue}
-        className="w-full h-11 px-4 rounded-xl bg-white hover:bg-stone-50 border border-stone-300 text-stone-900 font-semibold text-xs flex items-center justify-center gap-2.5 shadow-sm transition-colors"
+        disabled={loading || googleLoading}
+        className="w-full h-11 px-4 rounded-xl bg-white hover:bg-stone-50 disabled:opacity-60 border border-stone-300 text-stone-900 font-semibold text-xs flex items-center justify-center gap-2.5 shadow-sm transition-colors"
       >
-        <svg className="w-4 h-4 shrink-0" viewBox="0 0 24 24" aria-hidden="true">
-          <path fill="#EA4335" d="M12 10.2v3.9h5.5c-.24 1.25-.96 2.31-2.04 3.02l3.3 2.56c1.92-1.77 3.03-4.38 3.03-7.48 0-.72-.06-1.41-.19-2.08H12z" />
-          <path fill="#34A853" d="M12 22c2.7 0 4.96-.9 6.61-2.42l-3.3-2.56c-.91.61-2.08.98-3.31.98-2.54 0-4.69-1.71-5.46-4.02H3.13v2.64C4.77 19.87 8.13 22 12 22z" />
-          <path fill="#4A90E2" d="M6.54 13.98A5.99 5.99 0 0 1 6.23 12c0-.69.12-1.35.31-1.98V7.38H3.13A9.97 9.97 0 0 0 2 12c0 1.61.39 3.13 1.13 4.62l3.41-2.64z" />
-          <path fill="#FBBC05" d="M12 6.01c1.47 0 2.78.51 3.82 1.5l2.86-2.86C16.95 3.04 14.7 2 12 2 8.13 2 4.77 4.13 3.13 7.38l3.41 2.64C7.31 7.72 9.46 6.01 12 6.01z" />
-        </svg>
-        <span>Continue with Google</span>
+        {googleLoading ? (
+          <>
+            <Loader2 className="w-4 h-4 animate-spin text-stone-700" />
+            <span>Redirecting to Google...</span>
+          </>
+        ) : (
+          <>
+            <svg className="w-4 h-4 shrink-0" viewBox="0 0 24 24" aria-hidden="true">
+              <path fill="#EA4335" d="M12 10.2v3.9h5.5c-.24 1.25-.96 2.31-2.04 3.02l3.3 2.56c1.92-1.77 3.03-4.38 3.03-7.48 0-.72-.06-1.41-.19-2.08H12z" />
+              <path fill="#34A853" d="M12 22c2.7 0 4.96-.9 6.61-2.42l-3.3-2.56c-.91.61-2.08.98-3.31.98-2.54 0-4.69-1.71-5.46-4.02H3.13v2.64C4.77 19.87 8.13 22 12 22z" />
+              <path fill="#4A90E2" d="M6.54 13.98A5.99 5.99 0 0 1 6.23 12c0-.69.12-1.35.31-1.98V7.38H3.13A9.97 9.97 0 0 0 2 12c0 1.61.39 3.13 1.13 4.62l3.41-2.64z" />
+              <path fill="#FBBC05" d="M12 6.01c1.47 0 2.78.51 3.82 1.5l2.86-2.86C16.95 3.04 14.7 2 12 2 8.13 2 4.77 4.13 3.13 7.38l3.41 2.64C7.31 7.72 9.46 6.01 12 6.01z" />
+            </svg>
+            <span>Continue with Google</span>
+          </>
+        )}
       </button>
 
       {googleNotice && (

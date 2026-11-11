@@ -25,7 +25,7 @@ function createContentSecurityPolicy(nonce: string) {
     connect-src 'self' http://localhost:* ws://localhost:* https:;
     object-src 'none';
     base-uri 'self';
-    form-action 'self';
+    form-action 'self' https://accounts.google.com;
     frame-ancestors 'none';
     ${isDev ? '' : 'block-all-mixed-content; upgrade-insecure-requests;'}
   `

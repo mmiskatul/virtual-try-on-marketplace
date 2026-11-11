@@ -89,7 +89,12 @@ if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET) {
   providers.push(
     GoogleProvider({
       clientId: process.env.GOOGLE_CLIENT_ID,
-      clientSecret: process.env.GOOGLE_CLIENT_SECRET
+      clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+      authorization: {
+        params: {
+          prompt: 'select_account',
+        },
+      },
     })
   );
 }
@@ -115,8 +120,11 @@ export const authOptions: NextAuthOptions = {
     maxAge: 30 * 24 * 60 * 60 // 30 days
   },
   callbacks: {
-    async jwt({ token, user, account }) {
-      if (account?.provider === 'google' && account?.id_token && user?.email) {
+    async signIn({ user, account }) {
+      if (account?.provider === 'google') {
+        if (!account.id_token || !user?.email) {
+          return '/login?error=GoogleSyncFailed';
+        }
         try {
           const syncRes = await fetch(`${BACKEND_API_URL}/api/v1/marketplace/auth/oauth-google`, {
             method: 'POST',
@@ -125,23 +133,35 @@ export const authOptions: NextAuthOptions = {
             },
             body: JSON.stringify({ idToken: account.id_token, email: user.email, name: user.name }),
           });
-          if (syncRes.ok) {
-            const syncData = await syncRes.json();
-            token.id = syncData.user?.id || token.id;
-            token.role = syncData.user?.role || 'CUSTOMER';
-            token.backendToken = syncData.token;
-            token.emailVerified = true;
-            return token;
+          const syncData = await syncRes.json().catch(() => ({}));
+          if (!syncRes.ok || !syncData?.token || !syncData?.user?.id) {
+            if (syncData?.error === 'PortalMismatch') {
+              return '/login?error=PortalMismatch';
+            }
+            return '/login?error=GoogleSyncFailed';
           }
+          user.id = syncData.user.id;
+          user.name = syncData.user.name || user.name;
+          user.email = syncData.user.email || user.email;
+          user.role = syncData.user.role || 'CUSTOMER';
+          user.backendToken = syncData.token;
+          user.emailVerified = true;
+          return true;
         } catch {
-          // Keep standard NextAuth OAuth session if backend sync is temporarily unavailable
+          return '/login?error=GoogleSyncFailed';
         }
       }
+      return true;
+    },
+    async jwt({ token, user }) {
       if (user) {
         token.id = user.id;
         token.role = user.role || 'CUSTOMER';
         token.backendToken = user.backendToken;
         token.emailVerified = Boolean(user.emailVerified);
+        if (user.image) {
+          token.picture = user.image;
+        }
       }
       return token;
     },
@@ -150,6 +170,9 @@ export const authOptions: NextAuthOptions = {
         session.user.id = (token.id as string) || '';
         session.user.role = (token.role as string) || 'CUSTOMER';
         session.user.emailVerified = Boolean(token.emailVerified);
+        if (typeof token.picture === 'string' && token.picture) {
+          session.user.image = token.picture;
+        }
       }
       session.backendToken = token.backendToken;
       return session;

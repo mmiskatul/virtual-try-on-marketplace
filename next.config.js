@@ -26,6 +26,10 @@ const nextConfig = {
         hostname: '*.onrender.com'
       },
       {
+        protocol: 'https',
+        hostname: '*.googleusercontent.com'
+      },
+      {
         protocol: 'http',
         hostname: 'localhost'
       },
