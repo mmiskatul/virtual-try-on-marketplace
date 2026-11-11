@@ -24,7 +24,7 @@ const INITIAL_NOTIFICATIONS: AppNotification[] = [
     message: 'Dhaka Loom House and Noor & Zari added handwoven muslin Panjabis and Jamdani sarees.',
     href: '/collections?collection=eid-collection',
     read: false,
-    createdAt: new Date(Date.now() - 3600_000 * 3).toISOString(),
+    createdAt: '2026-11-11T09:00:00.000Z',
   },
   {
     id: 'notif_2',
@@ -33,7 +33,7 @@ const INITIAL_NOTIFICATIONS: AppNotification[] = [
     message: 'Apply code VTRY10 at checkout across participating brands or enjoy free shipping over $150.',
     href: '/discover?onSale=true',
     read: false,
-    createdAt: new Date(Date.now() - 3600_000 * 14).toISOString(),
+    createdAt: '2026-11-10T22:00:00.000Z',
   },
   {
     id: 'notif_3',
@@ -42,7 +42,7 @@ const INITIAL_NOTIFICATIONS: AppNotification[] = [
     message: 'Explore studio-only cashmere outerwear exclusively on the Aura Atelier storefront.',
     href: '/brands/aura-atelier',
     read: true,
-    createdAt: new Date(Date.now() - 86400_000 * 2).toISOString(),
+    createdAt: '2026-11-09T12:00:00.000Z',
   },
 ];
 

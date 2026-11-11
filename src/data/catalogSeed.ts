@@ -473,6 +473,8 @@ interface ProductInput {
   publishedDaysAgo?: number;
 }
 
+const SEED_PUBLISHED_ANCHOR_MS = Date.UTC(2026, 10, 11, 12, 0, 0);
+
 function buildProduct(input: ProductInput): MarketplaceProduct {
   const brand = brandMap.get(input.brandSlug) || SEED_BRANDS[0];
   const marketplaceStatus: PublicationStatus = input.marketplaceStatus ?? 'PUBLISHED';
@@ -498,7 +500,7 @@ function buildProduct(input: ProductInput): MarketplaceProduct {
   }));
 
   const daysAgo = input.publishedDaysAgo ?? 10;
-  const publishedAt = new Date(Date.now() - daysAgo * 86_400_000).toISOString();
+  const publishedAt = new Date(SEED_PUBLISHED_ANCHOR_MS - daysAgo * 86_400_000).toISOString();
 
   return {
     id: input.id,

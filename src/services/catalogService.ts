@@ -344,20 +344,26 @@ export function filterAndSortProducts(
   items = [...items].sort((a, b) => {
     switch (sortBy) {
       case 'newest':
-        return new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime();
+        return (
+          new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime() ||
+          a.id.localeCompare(b.id)
+        );
       case 'popular':
-        return b.totalSold + (b.favoritesCount || 0) - (a.totalSold + (a.favoritesCount || 0));
+        return (
+          b.totalSold + (b.favoritesCount || 0) - (a.totalSold + (a.favoritesCount || 0)) ||
+          a.id.localeCompare(b.id)
+        );
       case 'rating':
-        return b.rating - a.rating || b.reviewCount - a.reviewCount;
+        return b.rating - a.rating || b.reviewCount - a.reviewCount || a.id.localeCompare(b.id);
       case 'price-asc':
-        return a.price - b.price;
+        return a.price - b.price || a.id.localeCompare(b.id);
       case 'price-desc':
-        return b.price - a.price;
+        return b.price - a.price || a.id.localeCompare(b.id);
       case 'reviews':
-        return b.reviewCount - a.reviewCount;
+        return b.reviewCount - a.reviewCount || a.id.localeCompare(b.id);
       case 'recommended':
       default:
-        return Number(b.isFeatured) - Number(a.isFeatured) || b.totalSold - a.totalSold;
+        return Number(b.isFeatured) - Number(a.isFeatured) || b.totalSold - a.totalSold || a.id.localeCompare(b.id);
     }
   });
 
