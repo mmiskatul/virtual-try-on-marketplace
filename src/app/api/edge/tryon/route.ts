@@ -24,7 +24,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const backendUrl = process.env.NEXT_PUBLIC_MARKETPLACE_API_URL || 'http://localhost:4000';
+    const backendUrl = process.env.NEXT_PUBLIC_BACKEND_API_URL || 'http://localhost:4000';
     let jobResult: any = null;
 
     try {

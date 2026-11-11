@@ -3,8 +3,7 @@
  * Handles communication with backend-api (:4000) and ai-service (:8000)
  */
 
-const MARKETPLACE_API_URL = process.env.NEXT_PUBLIC_MARKETPLACE_API_URL || 'http://localhost:4000';
-const AI_SERVICE_URL = process.env.NEXT_PUBLIC_AI_SERVICE_URL || 'http://localhost:8000';
+const MARKETPLACE_API_URL = process.env.NEXT_PUBLIC_BACKEND_API_URL || 'http://localhost:4000';
 
 export interface DevEmailPreview {
   actionUrl?: string;

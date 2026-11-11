@@ -19,7 +19,7 @@ export async function GET(request: NextRequest) {
   let products = [...INITIAL_PRODUCTS];
 
   // Try fetching from the upstream marketplace API with a low timeout, fallback to local edge dataset
-  const upstreamApiUrl = process.env.NEXT_PUBLIC_MARKETPLACE_API_URL;
+  const upstreamApiUrl = process.env.NEXT_PUBLIC_BACKEND_API_URL;
   if (upstreamApiUrl) {
     try {
       const controller = new AbortController();

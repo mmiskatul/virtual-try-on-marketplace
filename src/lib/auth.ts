@@ -4,7 +4,7 @@ import GoogleProvider from 'next-auth/providers/google';
 import GitHubProvider from 'next-auth/providers/github';
 
 const BACKEND_API_URL =
-  process.env.MARKETPLACE_API_URL || process.env.NEXT_PUBLIC_MARKETPLACE_API_URL || 'http://localhost:4000';
+  process.env.NEXT_PUBLIC_BACKEND_API_URL || 'http://localhost:4000';
 
 const providers: NextAuthOptions['providers'] = [
   CredentialsProvider({
