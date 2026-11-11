@@ -5,12 +5,6 @@
 
 const MARKETPLACE_API_URL = process.env.NEXT_PUBLIC_BACKEND_API_URL || 'http://localhost:4000';
 
-export interface DevEmailPreview {
-  actionUrl?: string;
-  otpCode?: string;
-  expiresInMinutes?: number;
-}
-
 export class ApiError extends Error {
   constructor(public status: number, message: string, public data?: any) {
     super(message);
@@ -73,7 +67,6 @@ export const marketplaceApi = {
         emailDelivered?: boolean;
         warning?: string;
         user: { id: string; name: string; email: string; role: string; emailVerified: boolean };
-        devPreview?: DevEmailPreview;
       }>(`${MARKETPLACE_API_URL}/api/v1/marketplace/auth/register`, {
         method: 'POST',
         body: JSON.stringify(payload)
@@ -106,9 +99,7 @@ export const marketplaceApi = {
     resendVerification: (email: string) => {
       return request<{
         message: string;
-        warning?: string;
         alreadyVerified?: boolean;
-        devPreview?: DevEmailPreview;
       }>(`${MARKETPLACE_API_URL}/api/v1/marketplace/auth/resend-verification`, {
         method: 'POST',
         body: JSON.stringify({ email, portal: 'marketplace' })
@@ -118,7 +109,6 @@ export const marketplaceApi = {
     forgotPassword: (email: string) => {
       return request<{
         message: string;
-        devPreview?: DevEmailPreview;
       }>(`${MARKETPLACE_API_URL}/api/v1/marketplace/auth/forgot-password`, {
         method: 'POST',
         body: JSON.stringify({ email, portal: 'marketplace' })

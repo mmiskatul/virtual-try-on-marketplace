@@ -8,9 +8,8 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { CheckCircle2, AlertCircle, Loader2, Mail, ShieldCheck, ArrowRight, Lock, X } from 'lucide-react';
 import { verifyEmailSchema, VerifyEmailFormValues } from '../../lib/schemas';
-import { marketplaceApi, DevEmailPreview } from '../../lib/api';
+import { marketplaceApi } from '../../lib/api';
 import { AuthShell } from '../../components/auth/AuthShell';
-import { DevEmailPreviewCard } from '../../components/auth/DevEmailPreviewCard';
 import { Input } from '../../components/ui/input';
 import { Button } from '../../components/ui/button';
 
@@ -37,7 +36,6 @@ function VerifyEmailContent() {
   const [message, setMessage] = useState<string | null>(urlWarning);
   const [resending, setResending] = useState(false);
   const [cooldown, setCooldown] = useState(0);
-  const [devPreview, setDevPreview] = useState<DevEmailPreview | null>(null);
   const [toastMsg, setToastMsg] = useState<string | null>(
     fromRegister && urlEmail && !urlWarning
       ? `Verification code sent to ${urlEmail}. Check your inbox (or spam folder) and enter the 6-digit code below.`
@@ -49,7 +47,6 @@ function VerifyEmailContent() {
     register,
     handleSubmit,
     getValues,
-    setValue,
     formState: { errors, isSubmitting },
   } = useForm<VerifyEmailFormValues>({
     resolver: zodResolver(verifyEmailSchema),
@@ -58,23 +55,6 @@ function VerifyEmailContent() {
       code: '',
     },
   });
-
-  // Load any verification preview code generated on the previous registration step
-  useEffect(() => {
-    if (!urlEmail || typeof window === 'undefined') return;
-    try {
-      const raw = sessionStorage.getItem(`vton_pending_verify_${urlEmail.toLowerCase()}`);
-      if (raw) {
-        const parsed = JSON.parse(raw) as DevEmailPreview;
-        setDevPreview(parsed);
-        if (parsed.otpCode) {
-          setValue('code', parsed.otpCode);
-        }
-      }
-    } catch {
-      // ignore storage errors
-    }
-  }, [urlEmail, setValue]);
 
   useEffect(() => {
     if (!toastMsg) return;
@@ -160,20 +140,10 @@ function VerifyEmailContent() {
       if (res.alreadyVerified) {
         setStatus('verified');
         setMessage(res.message);
-      } else if (res.warning) {
-        setStatus('idle');
-        setMessage(res.warning);
-        setCooldown(30);
       } else {
         setStatus('idle');
         setToastMsg(res.message || `New verification code sent to ${email}.`);
         setCooldown(30);
-      }
-      if (res.devPreview) {
-        setDevPreview(res.devPreview);
-        if (res.devPreview.otpCode) {
-          setValue('code', res.devPreview.otpCode);
-        }
       }
     } catch (err: any) {
       setStatus('error');
@@ -268,8 +238,6 @@ function VerifyEmailContent() {
             <span>{message}</span>
           </div>
         )}
-
-      <DevEmailPreviewCard preview={devPreview} actionLabel="Verify with Direct Link" />
 
       <form onSubmit={handleSubmit(onSubmitCode)} className="space-y-4">
         <div className="space-y-1">

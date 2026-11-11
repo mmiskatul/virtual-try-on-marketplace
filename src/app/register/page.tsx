@@ -13,19 +13,19 @@ function RegisterFormContent() {
 
   return (
     <AuthShell
-      title="Join V-TRY Studio"
-      subtitle="Continue with Google or enter your email to create an account or sign in."
+      title="Create your V-TRY account"
+      subtitle="Sign up with Google or create an account with your email to start trying on styles."
       badge="Customer Account"
       footer={
         <p>
-          Already registered?{' '}
+          Already have an account?{' '}
           <Link href="/login" className="text-black hover:text-gray-700 font-semibold">
-            Sign in
+            Log in
           </Link>
         </p>
       }
     >
-      <CustomerEmailFlow callbackUrl={callbackUrl} initialEmail={prefillEmail} />
+      <CustomerEmailFlow initialMode="signup" callbackUrl={callbackUrl} initialEmail={prefillEmail} />
     </AuthShell>
   );
 }

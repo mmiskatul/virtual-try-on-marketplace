@@ -1,15 +1,24 @@
 'use client';
 
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { CustomerEmailFlow } from '../auth/CustomerEmailFlow';
+import { AuthFlowMode, CustomerEmailFlow } from '../auth/CustomerEmailFlow';
 
 interface AuthModalProps {
   isOpen: boolean;
+  initialMode?: AuthFlowMode;
   onClose: () => void;
 }
 
-export function AuthModal({ isOpen, onClose }: AuthModalProps) {
+export function AuthModal({ isOpen, initialMode = 'login', onClose }: AuthModalProps) {
+  const [mode, setMode] = useState<AuthFlowMode>(initialMode);
+
+  useEffect(() => {
+    if (isOpen) {
+      setMode(initialMode);
+    }
+  }, [isOpen, initialMode]);
+
   if (!isOpen) return null;
 
   return (
@@ -17,9 +26,13 @@ export function AuthModal({ isOpen, onClose }: AuthModalProps) {
       <div className="glass-panel w-full max-w-md p-6 rounded-3xl border border-gray-300 shadow-2xl space-y-5 bg-white/95 max-h-[92vh] overflow-y-auto">
         <div className="flex items-center justify-between border-b border-gray-200 pb-3">
           <div>
-            <h3 className="font-bold text-base text-gray-900">V-TRY Customer Account</h3>
+            <h3 className="font-bold text-base text-gray-900">
+              {mode === 'login' ? 'Log in to V-TRY' : 'Create your V-TRY account'}
+            </h3>
             <p className="text-[11px] text-gray-500">
-              Continue with Google or email to sign in or register
+              {mode === 'login'
+                ? 'Welcome back — log in with Google or your email'
+                : 'Sign up with Google or create an account with email'}
             </p>
           </div>
           <button
@@ -33,6 +46,8 @@ export function AuthModal({ isOpen, onClose }: AuthModalProps) {
         </div>
 
         <CustomerEmailFlow
+          initialMode={mode}
+          onModeChange={setMode}
           onAuthenticated={onClose}
           onNavigate={onClose}
         />
@@ -41,7 +56,11 @@ export function AuthModal({ isOpen, onClose }: AuthModalProps) {
           <Link href="/forgot-password" onClick={onClose} className="text-gray-700 hover:text-black font-medium">
             Forgot password?
           </Link>
-          <Link href="/login" onClick={onClose} className="text-gray-700 hover:text-black font-medium">
+          <Link
+            href={mode === 'login' ? '/login' : '/register'}
+            onClick={onClose}
+            className="text-gray-700 hover:text-black font-medium"
+          >
             Full page view →
           </Link>
         </div>

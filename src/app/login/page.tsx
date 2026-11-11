@@ -44,14 +44,14 @@ function LoginFormContent() {
 
   return (
     <AuthShell
-      title="Welcome to V-TRY Studio"
-      subtitle="Sign in with Google or continue with your email to shop and try on styles."
+      title="Log in to V-TRY Studio"
+      subtitle="Log in with Google or your email to shop and try on styles."
       badge="Customer Account"
       footer={
         <p>
-          Need help?{' '}
-          <Link href="/forgot-password" className="text-black hover:text-gray-700 font-semibold">
-            Reset password
+          New to V-TRY Studio?{' '}
+          <Link href="/register" className="text-black hover:text-gray-700 font-semibold">
+            Sign up
           </Link>
         </p>
       }
@@ -99,6 +99,7 @@ function LoginFormContent() {
       )}
 
       <CustomerEmailFlow
+        initialMode="login"
         callbackUrl={callbackUrl}
         initialEmail={prefillEmail}
         initialError={initialError}
