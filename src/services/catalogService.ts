@@ -183,7 +183,7 @@ export async function fetchAllPublishedMarketplaceProducts(): Promise<{
   try {
     const controller = new AbortController();
     const timer = setTimeout(() => controller.abort(), 3500);
-    const res = await fetch(`${API_BASE}/api/v1/marketplace/products`, {
+    const res = await fetch(`${API_BASE}/api/v1/marketplace/catalog?limit=100`, {
       signal: controller.signal,
       headers: { Accept: 'application/json' },
       cache: 'no-store',
@@ -192,10 +192,11 @@ export async function fetchAllPublishedMarketplaceProducts(): Promise<{
 
     if (res.ok) {
       const json = await res.json();
-      if (Array.isArray(json)) {
-        liveProducts = json
+      const rawItems = Array.isArray(json) ? json : Array.isArray(json?.data) ? json.data : [];
+      if (rawItems.length > 0 || json?.success === true) {
+        liveProducts = rawItems
           .map(normalizeBackendProduct)
-          .filter((p) => p.marketplaceStatus === 'PUBLISHED' && p.marketplacePublished === true);
+          .filter((p: MarketplaceProduct) => p.marketplaceStatus === 'PUBLISHED' && p.marketplacePublished === true);
         source = 'live_backend';
       }
     }
