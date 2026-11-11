@@ -162,8 +162,8 @@ export const marketplaceApi = {
   },
 
   // Dispatch Virtual Try-On via Unified Backend (orchestrates AI generation & Cloudinary CDN persistence)
-  submitTryOn: (payload: { personImage: string; garmentImage: string; category?: string; prompt?: string }) => {
-    return request<{ jobId: string; status: string; queuePosition?: number }>(
+  submitTryOn: (payload: { productId: string; personImage: string; garmentImage: string; category?: string; prompt?: string }) => {
+    return request<{ jobId: string; generationId?: string; accessToken?: string; status: string; queuePosition?: number }>(
       `${MARKETPLACE_API_URL}/api/v1/try-on/submit`,
       {
         method: 'POST',
@@ -173,9 +173,11 @@ export const marketplaceApi = {
   },
 
   // Poll Virtual Try-On Result (Backend receives AI output and persists result on Cloudinary CDN)
-  getTryOnStatus: (jobId: string) => {
+  // accessToken is the secret returned by submitTryOn; without it the job cannot be read
+  getTryOnStatus: (jobId: string, accessToken: string) => {
     return request<{ jobId: string; status: string; resultUrl?: string; output_url?: string; storageProvider?: string }>(
-      `${MARKETPLACE_API_URL}/api/v1/try-on/status/${jobId}`
+      `${MARKETPLACE_API_URL}/api/v1/try-on/status/${jobId}`,
+      { headers: { 'x-try-on-token': accessToken } }
     );
   }
 };

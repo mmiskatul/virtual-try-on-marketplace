@@ -105,10 +105,6 @@ function LoginFormContent() {
     await performLogin(data.email, data.password);
   };
 
-  const handleDemoLogin = async () => {
-    await performLogin('sarah.miller@example.com', 'password123');
-  };
-
   const handleResendVerification = async () => {
     const email = needsVerificationEmail || getValues('email');
     if (!email) return;
@@ -286,15 +282,6 @@ function LoginFormContent() {
           )}
         </Button>
 
-        <Button
-          type="button"
-          variant="outline"
-          disabled={isSubmitting}
-          onClick={handleDemoLogin}
-          className="w-full"
-        >
-          Instant Demo Customer Login (Sarah Miller)
-        </Button>
       </form>
     </AuthShell>
   );

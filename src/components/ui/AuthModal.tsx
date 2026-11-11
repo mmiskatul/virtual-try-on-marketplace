@@ -50,10 +50,7 @@ export function AuthModal({ isOpen, onClose }: AuthModalProps) {
     formState: { errors, isSubmitting }
   } = useForm<CustomerAuthFormValues>({
     resolver: zodResolver(customerAuthSchema),
-    defaultValues: {
-      email: 'sarah.miller@example.com',
-      password: 'password123'
-    }
+    defaultValues: { email: '', password: '' }
   });
 
   if (!isOpen) return null;
@@ -91,10 +88,6 @@ export function AuthModal({ isOpen, onClose }: AuthModalProps) {
 
   const onCredentialsSubmit = async (data: CustomerAuthFormValues) => {
     await signInWithCredentials(data.email, data.password);
-  };
-
-  const handleDemoLogin = async () => {
-    await signInWithCredentials('sarah.miller@example.com', 'password123');
   };
 
   const handleResend = async () => {
@@ -244,15 +237,6 @@ export function AuthModal({ isOpen, onClose }: AuthModalProps) {
             {isSubmitting ? 'Signing In...' : 'Sign In with Email'}
           </Button>
 
-          <Button
-            type="button"
-            variant="outline"
-            disabled={isSubmitting}
-            onClick={handleDemoLogin}
-            className="w-full border-slate-800 text-slate-300 hover:text-white hover:bg-slate-800"
-          >
-            Instant Demo Customer Login
-          </Button>
         </form>
 
         <div className="pt-2 border-t border-slate-800 flex items-center justify-between text-[11px] text-slate-400">

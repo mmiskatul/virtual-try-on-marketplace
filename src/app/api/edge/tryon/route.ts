@@ -12,7 +12,7 @@ export async function POST(request: NextRequest) {
 
   try {
     const body = await request.json();
-    const { userImageUrl, garmentImageUrl, clothType, brandSlug } = body;
+    const { userImageUrl, garmentImageUrl, clothType, productId } = body;
 
     if (!userImageUrl || !garmentImageUrl) {
       return NextResponse.json(
@@ -42,7 +42,7 @@ export async function POST(request: NextRequest) {
           personImage: userImageUrl,
           garmentImage: garmentImageUrl,
           category: clothType || 'tops',
-          tenantId: brandSlug || 'generic',
+          productId, // server resolves the shop from the product; the browser never chooses the tenant
         }),
         signal: controller.signal,
       });
