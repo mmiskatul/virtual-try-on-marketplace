@@ -5,7 +5,6 @@ import GitHubProvider from 'next-auth/providers/github';
 
 const BACKEND_API_URL =
   process.env.NEXT_PUBLIC_BACKEND_API_URL || 'http://localhost:4000';
-const INTERNAL_SERVICE_KEY = process.env.INTERNAL_SERVICE_KEY || '';
 
 const providers: NextAuthOptions['providers'] = [
   CredentialsProvider({
@@ -117,15 +116,14 @@ export const authOptions: NextAuthOptions = {
   },
   callbacks: {
     async jwt({ token, user, account }) {
-      if (account?.provider === 'google' && user?.email && INTERNAL_SERVICE_KEY) {
+      if (account?.provider === 'google' && account?.id_token && user?.email) {
         try {
           const syncRes = await fetch(`${BACKEND_API_URL}/api/v1/marketplace/auth/oauth-google`, {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
-              'X-Service-Key': INTERNAL_SERVICE_KEY,
             },
-            body: JSON.stringify({ email: user.email, name: user.name }),
+            body: JSON.stringify({ idToken: account.id_token, email: user.email, name: user.name }),
           });
           if (syncRes.ok) {
             const syncData = await syncRes.json();
