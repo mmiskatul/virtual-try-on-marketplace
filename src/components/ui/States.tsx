@@ -13,6 +13,7 @@ export function SafeImage({
   src,
   alt,
   fallbackSrc = FALLBACK_FASHION_IMAGE,
+  sizes,
   ...rest
 }: ImageProps & { fallbackSrc?: string }) {
   const [imgSrc, setImgSrc] = useState(src || fallbackSrc);
@@ -20,6 +21,7 @@ export function SafeImage({
   return (
     <Image
       {...rest}
+      sizes={rest.fill ? sizes || '(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw' : sizes}
       src={imgSrc || fallbackSrc}
       alt={alt || 'Fashion garment'}
       onError={() => {

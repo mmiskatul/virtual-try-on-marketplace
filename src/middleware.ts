@@ -19,7 +19,7 @@ function createContentSecurityPolicy(nonce: string) {
   return `
     default-src 'self';
     script-src 'self' 'nonce-${nonce}' 'strict-dynamic' ${isDev ? "'unsafe-eval'" : ''} https:;
-    style-src 'self' 'nonce-${nonce}' 'unsafe-inline' https:;
+    style-src 'self' 'unsafe-inline' https:;
     img-src 'self' blob: data: https://images.unsplash.com https:;
     font-src 'self' data: https:;
     connect-src 'self' http://localhost:* ws://localhost:* https:;
@@ -27,8 +27,7 @@ function createContentSecurityPolicy(nonce: string) {
     base-uri 'self';
     form-action 'self';
     frame-ancestors 'none';
-    block-all-mixed-content;
-    upgrade-insecure-requests;
+    ${isDev ? '' : 'block-all-mixed-content; upgrade-insecure-requests;'}
   `
     .replace(/\s{2,}/g, ' ')
     .trim();

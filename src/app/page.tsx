@@ -1,5 +1,4 @@
 import type { Metadata } from 'next';
-import { headers } from 'next/headers';
 import { MarketplaceClient } from './MarketplaceClient';
 import { INITIAL_BRANDS, INITIAL_PRODUCTS } from '../data/catalogSeed';
 
@@ -14,7 +13,6 @@ export default function MarketplaceHomePage() {
     process.env.NEXT_PUBLIC_SITE_URL ||
     process.env.NEXTAUTH_URL ||
     (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'http://localhost:3000');
-  const nonce = headers().get('x-nonce') ?? undefined;
 
   const jsonLdGraph = {
     '@context': 'https://schema.org',
@@ -70,7 +68,7 @@ export default function MarketplaceHomePage() {
     <>
       <script
         type="application/ld+json"
-        nonce={nonce}
+        suppressHydrationWarning
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLdGraph) }}
       />
       <MarketplaceClient />

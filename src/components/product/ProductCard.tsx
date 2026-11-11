@@ -37,7 +37,7 @@ export function ProductCard({
     <article className="group fashion-card rounded-2xl overflow-hidden flex flex-col justify-between">
       {/* Upper Media Area */}
       <div className="relative aspect-[3/4] overflow-hidden bg-stone-100">
-        <Link href={productHref} className="block w-full h-full">
+        <Link href={productHref} className="block relative w-full h-full">
           <SafeImage
             src={activeImage}
             alt={product.name}
