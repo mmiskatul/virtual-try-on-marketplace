@@ -106,6 +106,7 @@ export const marketplaceApi = {
     resendVerification: (email: string) => {
       return request<{
         message: string;
+        warning?: string;
         alreadyVerified?: boolean;
         devPreview?: DevEmailPreview;
       }>(`${MARKETPLACE_API_URL}/api/v1/marketplace/auth/resend-verification`, {

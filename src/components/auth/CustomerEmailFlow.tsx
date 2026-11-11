@@ -161,10 +161,9 @@ export function CustomerEmailFlow({
       });
       persistPendingVerifyPreview(res.user.email, res.devPreview);
       onNavigate?.();
-      const warningParam =
-        res.emailDelivered === false && res.warning
-          ? `&warning=${encodeURIComponent(res.warning)}`
-          : '';
+      const warningParam = res.warning
+        ? `&warning=${encodeURIComponent(res.warning)}`
+        : '';
       router.push(
         `/verify-email?email=${encodeURIComponent(res.user.email)}&from=register&callbackUrl=${encodeURIComponent(callbackUrl)}${warningParam}`
       );

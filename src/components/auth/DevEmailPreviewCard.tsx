@@ -34,7 +34,7 @@ export function DevEmailPreviewCard({ preview, actionLabel = 'Open Email Link' }
         <span>Local Dev Email Preview</span>
       </div>
       <p className="text-[11px] text-amber-800/80 leading-relaxed">
-        SMTP/Resend is not configured in this environment, so your email content is surfaced here for testing:
+        Resend live delivery is inactive or domain-restricted in this environment, so your email content is surfaced here for local testing:
       </p>
 
       {preview.otpCode && (

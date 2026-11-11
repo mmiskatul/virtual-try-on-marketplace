@@ -160,6 +160,10 @@ function VerifyEmailContent() {
       if (res.alreadyVerified) {
         setStatus('verified');
         setMessage(res.message);
+      } else if (res.warning) {
+        setStatus('idle');
+        setMessage(res.warning);
+        setCooldown(30);
       } else {
         setStatus('idle');
         setToastMsg(res.message || `New verification code sent to ${email}.`);
