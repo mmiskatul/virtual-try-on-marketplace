@@ -18,11 +18,11 @@ export default function MarketplaceError({
 
   return (
     <div className="min-h-[80vh] flex items-center justify-center px-4 py-16">
-      <div className="max-w-md w-full fashion-card rounded-2xl border border-slate-800 p-8 text-center space-y-6 shadow-2xl relative overflow-hidden">
+      <div className="max-w-md w-full fashion-card rounded-2xl border border-gray-200 p-8 text-center space-y-6 shadow-2xl relative overflow-hidden">
         {/* Ambient background glow */}
-        <div className="absolute -top-24 left-1/2 -translate-x-1/2 w-48 h-48 bg-purple-600/20 rounded-full blur-3xl pointer-events-none" />
+        <div className="absolute -top-24 left-1/2 -translate-x-1/2 w-48 h-48 bg-gray-100 rounded-full blur-3xl pointer-events-none" />
 
-        <div className="w-16 h-16 rounded-2xl bg-rose-500/10 border border-rose-500/20 flex items-center justify-center mx-auto text-rose-400">
+        <div className="w-16 h-16 rounded-2xl bg-rose-500/10 border border-rose-500/20 flex items-center justify-center mx-auto text-rose-600">
           <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path
               strokeLinecap="round"
@@ -34,28 +34,28 @@ export default function MarketplaceError({
         </div>
 
         <div className="space-y-2">
-          <span className="text-[11px] font-mono uppercase tracking-widest text-purple-400 font-semibold px-2.5 py-0.5 rounded-full bg-purple-500/10 border border-purple-500/20">
+          <span className="text-[11px] font-mono uppercase tracking-widest text-black font-semibold px-2.5 py-0.5 rounded-full bg-gray-100 border border-gray-300">
             Fitting Room Interrupted
           </span>
-          <h2 className="text-2xl font-bold text-white tracking-tight pt-1">
+          <h2 className="text-2xl font-bold text-gray-900 tracking-tight pt-1">
             Unexpected Catalog Error
           </h2>
-          <p className="text-sm text-slate-400 leading-relaxed">
+          <p className="text-sm text-gray-500 leading-relaxed">
             The neural fitting room or catalog feed experienced an unexpected disruption. Your cart and session remain safe.
           </p>
         </div>
 
         {error.digest && (
-          <div className="bg-slate-950/80 rounded-lg p-3 border border-slate-800 text-left">
-            <p className="text-[10px] font-mono text-slate-500">Error Digest:</p>
-            <p className="text-xs font-mono text-slate-300 truncate">{error.digest}</p>
+          <div className="bg-white/80 rounded-lg p-3 border border-gray-200 text-left">
+            <p className="text-[10px] font-mono text-gray-500">Error Digest:</p>
+            <p className="text-xs font-mono text-gray-700 truncate">{error.digest}</p>
           </div>
         )}
 
         <div className="flex flex-col sm:flex-row gap-3 pt-2">
           <Button
             onClick={() => reset()}
-            className="flex-1 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white font-medium shadow-lg shadow-purple-600/25"
+            className="flex-1 bg-gradient-to-r from-black to-black hover:from-black hover:to-black text-white font-medium shadow-lg shadow-black/10"
           >
             <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
@@ -67,7 +67,7 @@ export default function MarketplaceError({
             <Button
               variant="outline"
               type="button"
-              className="w-full border-slate-800 text-slate-300 hover:bg-slate-900 hover:text-white"
+              className="w-full border-gray-200 text-gray-700 hover:bg-white hover:text-black"
             >
               Explore Runway
             </Button>

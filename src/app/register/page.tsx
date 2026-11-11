@@ -78,27 +78,27 @@ function RegisterFormContent() {
         footer={
           <p>
             Already verified?{' '}
-            <Link href="/login" className="text-purple-400 hover:text-purple-300 font-semibold">
+            <Link href="/login" className="text-black hover:text-gray-700 font-semibold">
               Sign in here
             </Link>
           </p>
         }
       >
         <div className="p-4 rounded-2xl bg-emerald-500/10 border border-emerald-500/25 space-y-2 text-xs">
-          <div className="flex items-center gap-2 text-emerald-300 font-bold">
+          <div className="flex items-center gap-2 text-emerald-700 font-bold">
             <CheckCircle2 className="w-4 h-4" />
             <span>Account created! Verification email sent</span>
           </div>
-          <p className="text-slate-300 leading-relaxed">
+          <p className="text-gray-700 leading-relaxed">
             We sent a verification link and a 6-digit code to{' '}
-            <span className="font-semibold text-white">{registeredEmail}</span>.
+            <span className="font-semibold text-gray-900">{registeredEmail}</span>.
           </p>
         </div>
 
         <DevEmailPreviewCard preview={devPreview} actionLabel="Click to Verify Email" />
 
         {resendStatus && (
-          <div className="p-3 rounded-xl bg-sky-500/15 border border-sky-500/30 text-sky-300 text-xs">
+          <div className="p-3 rounded-xl bg-gray-100 border border-gray-300 text-black text-xs">
             {resendStatus}
           </div>
         )}
@@ -106,7 +106,7 @@ function RegisterFormContent() {
         <div className="space-y-2.5">
           <Link
             href={`/verify-email?email=${encodeURIComponent(registeredEmail)}`}
-            className="w-full h-10 px-4 rounded-xl bg-purple-600 hover:bg-purple-500 text-white font-bold text-xs inline-flex items-center justify-center gap-2 shadow-lg shadow-purple-600/25 transition-all"
+            className="w-full h-10 px-4 rounded-xl bg-black hover:bg-gray-800 text-white font-bold text-xs inline-flex items-center justify-center gap-2 shadow-lg shadow-black/10 transition-all"
           >
             <span>Enter 6-Digit Verification Code</span>
             <ArrowRight className="w-4 h-4" />
@@ -135,7 +135,7 @@ function RegisterFormContent() {
       footer={
         <p>
           Already have an account?{' '}
-          <Link href="/login" className="text-purple-400 hover:text-purple-300 font-semibold">
+          <Link href="/login" className="text-black hover:text-gray-700 font-semibold">
             Sign in
           </Link>
         </p>
@@ -143,14 +143,14 @@ function RegisterFormContent() {
     >
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
         {errorMsg && (
-          <div className="p-3 rounded-xl bg-rose-500/15 border border-rose-500/30 text-rose-300 text-xs flex items-start gap-2">
+          <div className="p-3 rounded-xl bg-rose-500/15 border border-rose-500/30 text-rose-700 text-xs flex items-start gap-2">
             <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
             <span>{errorMsg}</span>
           </div>
         )}
 
         <div className="space-y-1">
-          <label className="block text-xs font-medium text-slate-300">Full Name</label>
+          <label className="block text-xs font-medium text-gray-700">Full Name</label>
           <Input
             type="text"
             placeholder="Maya Lin"
@@ -158,11 +158,11 @@ function RegisterFormContent() {
             {...register('name')}
             className={errors.name ? 'border-rose-500 focus-visible:border-rose-500' : ''}
           />
-          {errors.name && <p className="text-rose-400 text-[11px] font-medium">{errors.name.message}</p>}
+          {errors.name && <p className="text-rose-600 text-[11px] font-medium">{errors.name.message}</p>}
         </div>
 
         <div className="space-y-1">
-          <label className="block text-xs font-medium text-slate-300">Email Address</label>
+          <label className="block text-xs font-medium text-gray-700">Email Address</label>
           <Input
             type="email"
             placeholder="maya@example.com"
@@ -170,7 +170,7 @@ function RegisterFormContent() {
             {...register('email')}
             className={errors.email ? 'border-rose-500 focus-visible:border-rose-500' : ''}
           />
-          {errors.email && <p className="text-rose-400 text-[11px] font-medium">{errors.email.message}</p>}
+          {errors.email && <p className="text-rose-600 text-[11px] font-medium">{errors.email.message}</p>}
         </div>
 
         <PasswordField
@@ -208,7 +208,7 @@ function RegisterFormContent() {
 
 export default function CustomerRegisterPage() {
   return (
-    <Suspense fallback={<div className="min-h-screen bg-slate-950" />}>
+    <Suspense fallback={<div className="min-h-screen bg-white" />}>
       <RegisterFormContent />
     </Suspense>
   );

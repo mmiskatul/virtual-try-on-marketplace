@@ -7,8 +7,8 @@ export default function manifest(): MetadataRoute.Manifest {
     description: 'Discover luxury apparel across designer brands and try on clothes virtually before purchasing.',
     start_url: '/',
     display: 'standalone',
-    background_color: '#020617',
-    theme_color: '#9333ea',
+    background_color: '#ffffff',
+    theme_color: '#000000',
     icons: [
       {
         src: '/favicon.ico',

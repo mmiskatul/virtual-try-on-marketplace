@@ -108,8 +108,8 @@ function ResetPasswordContent() {
     return (
       <AuthShell title="Validating reset link..." subtitle="Please wait while we verify your recovery token." badge="Password Reset">
         <div className="py-10 flex flex-col items-center justify-center gap-3 text-center">
-          <Loader2 className="w-8 h-8 text-purple-400 animate-spin" />
-          <p className="text-xs text-slate-300">Checking reset token validity...</p>
+          <Loader2 className="w-8 h-8 text-black animate-spin" />
+          <p className="text-xs text-gray-700">Checking reset token validity...</p>
         </div>
       </AuthShell>
     );
@@ -118,13 +118,13 @@ function ResetPasswordContent() {
   if (tokenState === 'invalid') {
     return (
       <AuthShell title="Reset link expired or invalid" subtitle="For your security, password reset links expire after 30 minutes and can only be used once." badge="Password Reset">
-        <div className="p-3.5 rounded-xl bg-rose-500/15 border border-rose-500/30 text-rose-300 text-xs flex items-start gap-2">
+        <div className="p-3.5 rounded-xl bg-rose-500/15 border border-rose-500/30 text-rose-700 text-xs flex items-start gap-2">
           <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
           <span>{errorMsg}</span>
         </div>
         <Link
           href="/forgot-password"
-          className="w-full h-10 px-4 rounded-xl bg-purple-600 hover:bg-purple-500 text-white font-bold text-xs inline-flex items-center justify-center gap-2 transition-all"
+          className="w-full h-10 px-4 rounded-xl bg-black hover:bg-gray-800 text-white font-bold text-xs inline-flex items-center justify-center gap-2 transition-all"
         >
           <span>Request a New Reset Link</span>
           <ArrowRight className="w-4 h-4" />
@@ -136,16 +136,16 @@ function ResetPasswordContent() {
   if (resetDone) {
     return (
       <AuthShell title="Password reset successful" subtitle="Your account security credentials have been updated." badge="Password Updated">
-        <div className="p-4 rounded-2xl bg-emerald-500/15 border border-emerald-500/30 text-emerald-300 text-xs flex items-start gap-2.5">
+        <div className="p-4 rounded-2xl bg-emerald-500/15 border border-emerald-500/30 text-emerald-700 text-xs flex items-start gap-2.5">
           <CheckCircle2 className="w-5 h-5 shrink-0 mt-0.5" />
           <div className="space-y-1">
-            <p className="font-bold text-white">You are all set!</p>
+            <p className="font-bold text-gray-900">You are all set!</p>
             <p>Sign in using your new password.</p>
           </div>
         </div>
         <Link
           href={`/login?reset=1${tokenEmail ? `&email=${encodeURIComponent(tokenEmail)}` : ''}`}
-          className="w-full h-10 px-4 rounded-xl bg-purple-600 hover:bg-purple-500 text-white font-bold text-xs inline-flex items-center justify-center gap-2 shadow-lg shadow-purple-600/25 transition-all"
+          className="w-full h-10 px-4 rounded-xl bg-black hover:bg-gray-800 text-white font-bold text-xs inline-flex items-center justify-center gap-2 shadow-lg shadow-black/10 transition-all"
         >
           <span>Continue to Sign In</span>
           <ArrowRight className="w-4 h-4" />
@@ -166,7 +166,7 @@ function ResetPasswordContent() {
       footer={
         <p>
           Need a new reset code?{' '}
-          <Link href="/forgot-password" className="text-purple-400 hover:text-purple-300 font-semibold">
+          <Link href="/forgot-password" className="text-black hover:text-gray-700 font-semibold">
             Request again
           </Link>
         </p>
@@ -174,7 +174,7 @@ function ResetPasswordContent() {
     >
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
         {errorMsg && (
-          <div className="p-3 rounded-xl bg-rose-500/15 border border-rose-500/30 text-rose-300 text-xs flex items-start gap-2">
+          <div className="p-3 rounded-xl bg-rose-500/15 border border-rose-500/30 text-rose-700 text-xs flex items-start gap-2">
             <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
             <span>{errorMsg}</span>
           </div>
@@ -183,11 +183,11 @@ function ResetPasswordContent() {
         {!urlToken && (
           <>
             <div className="space-y-1">
-              <label className="block text-xs font-medium text-slate-300">Email Address</label>
+              <label className="block text-xs font-medium text-gray-700">Email Address</label>
               <Input type="email" placeholder="you@example.com" {...register('email')} />
             </div>
             <div className="space-y-1">
-              <label className="block text-xs font-medium text-slate-300">6-Digit Reset Code</label>
+              <label className="block text-xs font-medium text-gray-700">6-Digit Reset Code</label>
               <Input
                 type="text"
                 inputMode="numeric"
@@ -229,7 +229,7 @@ function ResetPasswordContent() {
 
 export default function CustomerResetPasswordPage() {
   return (
-    <Suspense fallback={<div className="min-h-screen bg-slate-950" />}>
+    <Suspense fallback={<div className="min-h-screen bg-white" />}>
       <ResetPasswordContent />
     </Suspense>
   );

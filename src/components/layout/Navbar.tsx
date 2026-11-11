@@ -30,33 +30,33 @@ export function Navbar({ search, onSearchChange, cartCount, onOpenCart }: Navbar
   return (
     <>
       {/* Top Marketplace Bar */}
-      <div className="bg-gradient-to-r from-purple-950 via-slate-900 to-indigo-950 border-b border-purple-500/20 py-2 px-6 text-center text-xs font-semibold text-purple-200 flex items-center justify-center gap-2">
-        <Sparkles className="w-3.5 h-3.5 text-purple-400" />
+      <div className="bg-gradient-to-r from-black via-white to-black border-b border-gray-300 py-2 px-6 text-center text-xs font-semibold text-black flex items-center justify-center gap-2">
+        <Sparkles className="w-3.5 h-3.5 text-black" />
         <span>Experience High-Fidelity AI Virtual Try-On across luxury fashion brands</span>
       </div>
 
       {/* Main Navbar */}
-      <header className="sticky top-0 z-40 fashion-glass border-b border-slate-800/80 px-6 py-4">
+      <header className="sticky top-0 z-40 fashion-glass border-b border-gray-200 px-6 py-4">
         <div className="max-w-7xl mx-auto flex items-center justify-between gap-6">
           {/* Logo */}
           <Link href="/" className="flex items-center gap-2.5">
-            <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-purple-600 via-indigo-600 to-sky-500 flex items-center justify-center font-black text-white text-base shadow-lg shadow-purple-500/25">
+            <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-black via-black to-black flex items-center justify-center font-black text-white text-base shadow-lg shadow-black/10">
               V
             </div>
-            <span className="font-extrabold tracking-widest text-lg font-['Playfair_Display',serif] text-white">
-              V-TRY <span className="text-xs text-purple-400 font-sans tracking-normal font-bold">STUDIO</span>
+            <span className="font-extrabold tracking-widest text-lg font-['Playfair_Display',serif] text-gray-900">
+              V-TRY <span className="text-xs text-black font-sans tracking-normal font-bold">STUDIO</span>
             </span>
           </Link>
 
           {/* Search Bar */}
           <div className="relative flex-1 max-w-lg hidden md:block">
-            <Search className="w-4 h-4 absolute left-3.5 top-3 text-slate-400" />
+            <Search className="w-4 h-4 absolute left-3.5 top-3 text-gray-500" />
             <input
               type="text"
               placeholder="Search designer apparel, silks, blazers, and dresses..."
               value={search}
               onChange={(e) => onSearchChange(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 bg-slate-900/80 border border-slate-800 rounded-full text-xs text-white placeholder-slate-500 focus:outline-none focus:border-purple-500 transition-colors"
+              className="w-full pl-10 pr-4 py-2 bg-white/80 border border-gray-200 rounded-full text-xs text-gray-900 placeholder-gray-400 focus:outline-none focus:border-black transition-colors"
             />
           </div>
 
@@ -64,7 +64,7 @@ export function Navbar({ search, onSearchChange, cartCount, onOpenCart }: Navbar
           <div className="flex items-center gap-3 text-xs font-semibold">
             {session?.user ? (
               <div className="flex items-center gap-2">
-                <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-slate-900 border border-slate-800 text-slate-200">
+                <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-white border border-gray-200 text-gray-800">
                   {session.user.image ? (
                     <Image
                       src={session.user.image}
@@ -74,9 +74,9 @@ export function Navbar({ search, onSearchChange, cartCount, onOpenCart }: Navbar
                       className="w-4 h-4 rounded-full object-cover"
                     />
                   ) : (
-                    <User className="w-3.5 h-3.5 text-purple-400" />
+                    <User className="w-3.5 h-3.5 text-black" />
                   )}
-                  <span className="font-medium text-white">{session.user.name?.split(' ')[0] || 'Member'}</span>
+                  <span className="font-medium text-gray-900">{session.user.name?.split(' ')[0] || 'Member'}</span>
                 </div>
                 <button
                   onClick={() => {
@@ -84,7 +84,7 @@ export function Navbar({ search, onSearchChange, cartCount, onOpenCart }: Navbar
                     signOut({ callbackUrl: '/' });
                   }}
                   title="Sign Out"
-                  className="p-1.5 rounded-full bg-slate-900 border border-slate-800 text-slate-400 hover:text-rose-400 transition-colors"
+                  className="p-1.5 rounded-full bg-white border border-gray-200 text-gray-500 hover:text-rose-600 transition-colors"
                 >
                   <LogOut className="w-3.5 h-3.5" />
                 </button>
@@ -93,14 +93,14 @@ export function Navbar({ search, onSearchChange, cartCount, onOpenCart }: Navbar
               <div className="flex items-center gap-2">
                 <Link
                   href="/register"
-                  className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-slate-900 hover:bg-slate-800 border border-slate-800 text-slate-200 font-semibold transition-colors"
+                  className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white hover:bg-gray-100 border border-gray-200 text-gray-800 font-semibold transition-colors"
                 >
-                  <UserPlus className="w-3.5 h-3.5 text-purple-400" />
+                  <UserPlus className="w-3.5 h-3.5 text-black" />
                   <span>Register</span>
                 </Link>
                 <button
                   onClick={() => setIsAuthModalOpen(true)}
-                  className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-purple-600 hover:bg-purple-500 text-white font-bold transition-all shadow-md shadow-purple-600/20"
+                  className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-black hover:bg-gray-800 text-white font-bold transition-all shadow-md shadow-black/10"
                 >
                   <User className="w-3.5 h-3.5" />
                   <span>Sign In</span>
@@ -110,12 +110,12 @@ export function Navbar({ search, onSearchChange, cartCount, onOpenCart }: Navbar
 
             <button
               onClick={onOpenCart}
-              className="relative p-2 rounded-full bg-slate-900 border border-slate-800 text-slate-300 hover:text-white hover:border-purple-500/50 transition-colors"
+              className="relative p-2 rounded-full bg-white border border-gray-200 text-gray-700 hover:text-black hover:border-gray-300 transition-colors"
               title="Shopping Bag"
             >
               <ShoppingBag className="w-4 h-4" />
               {cartCount > 0 && (
-                <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-purple-500 text-[10px] font-bold text-white flex items-center justify-center">
+                <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-black text-[10px] font-bold text-white flex items-center justify-center">
                   {cartCount}
                 </span>
               )}

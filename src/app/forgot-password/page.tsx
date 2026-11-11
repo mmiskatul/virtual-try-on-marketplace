@@ -77,24 +77,24 @@ function ForgotPasswordContent() {
         footer={
           <p>
             Remembered your password?{' '}
-            <Link href="/login" className="text-purple-400 hover:text-purple-300 font-semibold">
+            <Link href="/login" className="text-black hover:text-gray-700 font-semibold">
               Back to Sign In
             </Link>
           </p>
         }
       >
         <div className="p-4 rounded-2xl bg-emerald-500/10 border border-emerald-500/25 text-xs space-y-2">
-          <div className="flex items-center gap-2 text-emerald-300 font-bold">
+          <div className="flex items-center gap-2 text-emerald-700 font-bold">
             <CheckCircle2 className="w-4 h-4 shrink-0" />
             <span>Reset instructions sent</span>
           </div>
-          <p className="text-slate-300 leading-relaxed">
-            {statusMsg} Check <span className="font-semibold text-white">{submittedEmail}</span> for a password reset link and 6-digit reset code.
+          <p className="text-gray-700 leading-relaxed">
+            {statusMsg} Check <span className="font-semibold text-gray-900">{submittedEmail}</span> for a password reset link and 6-digit reset code.
           </p>
         </div>
 
         {errorMsg && (
-          <div className="p-3 rounded-xl bg-rose-500/15 border border-rose-500/30 text-rose-300 text-xs flex items-start gap-2">
+          <div className="p-3 rounded-xl bg-rose-500/15 border border-rose-500/30 text-rose-700 text-xs flex items-start gap-2">
             <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
             <span>{errorMsg}</span>
           </div>
@@ -105,7 +105,7 @@ function ForgotPasswordContent() {
         <div className="space-y-2.5">
           <Link
             href={`/reset-password?email=${encodeURIComponent(submittedEmail)}`}
-            className="w-full h-10 px-4 rounded-xl bg-purple-600 hover:bg-purple-500 text-white font-bold text-xs inline-flex items-center justify-center gap-2 shadow-lg shadow-purple-600/25 transition-all"
+            className="w-full h-10 px-4 rounded-xl bg-black hover:bg-gray-800 text-white font-bold text-xs inline-flex items-center justify-center gap-2 shadow-lg shadow-black/10 transition-all"
           >
             <span>Enter 6-Digit Reset Code</span>
             <ArrowRight className="w-4 h-4" />
@@ -134,7 +134,7 @@ function ForgotPasswordContent() {
       footer={
         <p>
           Remember your password?{' '}
-          <Link href="/login" className="text-purple-400 hover:text-purple-300 font-semibold">
+          <Link href="/login" className="text-black hover:text-gray-700 font-semibold">
             Sign in
           </Link>
         </p>
@@ -142,14 +142,14 @@ function ForgotPasswordContent() {
     >
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
         {errorMsg && (
-          <div className="p-3 rounded-xl bg-rose-500/15 border border-rose-500/30 text-rose-300 text-xs flex items-start gap-2">
+          <div className="p-3 rounded-xl bg-rose-500/15 border border-rose-500/30 text-rose-700 text-xs flex items-start gap-2">
             <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
             <span>{errorMsg}</span>
           </div>
         )}
 
         <div className="space-y-1">
-          <label className="block text-xs font-medium text-slate-300">Email Address</label>
+          <label className="block text-xs font-medium text-gray-700">Email Address</label>
           <Input
             type="email"
             placeholder="you@example.com"
@@ -157,7 +157,7 @@ function ForgotPasswordContent() {
             {...register('email')}
             className={errors.email ? 'border-rose-500 focus-visible:border-rose-500' : ''}
           />
-          {errors.email && <p className="text-rose-400 text-[11px] font-medium">{errors.email.message}</p>}
+          {errors.email && <p className="text-rose-600 text-[11px] font-medium">{errors.email.message}</p>}
         </div>
 
         <Button type="submit" disabled={isSubmitting} className="w-full font-bold gap-2">
@@ -171,7 +171,7 @@ function ForgotPasswordContent() {
 
 export default function CustomerForgotPasswordPage() {
   return (
-    <Suspense fallback={<div className="min-h-screen bg-slate-950" />}>
+    <Suspense fallback={<div className="min-h-screen bg-white" />}>
       <ForgotPasswordContent />
     </Suspense>
   );

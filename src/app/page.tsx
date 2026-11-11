@@ -143,7 +143,7 @@ export default function MarketplaceHomePage() {
   const nonce = headers().get('x-nonce') ?? undefined;
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col">
+    <div className="min-h-screen bg-white text-gray-900 flex flex-col">
       {/* Search Engine Structured Metadata with Cryptographic Nonce */}
       <script
         type="application/ld+json"

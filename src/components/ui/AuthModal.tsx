@@ -107,14 +107,14 @@ export function AuthModal({ isOpen, onClose }: AuthModalProps) {
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md">
-      <div className="glass-panel w-full max-w-md p-6 rounded-3xl border border-slate-700 shadow-2xl space-y-5 bg-slate-900/95 max-h-[92vh] overflow-y-auto">
-        <div className="flex items-center justify-between border-b border-slate-800 pb-3">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-white/80 backdrop-blur-md">
+      <div className="glass-panel w-full max-w-md p-6 rounded-3xl border border-gray-300 shadow-2xl space-y-5 bg-white/95 max-h-[92vh] overflow-y-auto">
+        <div className="flex items-center justify-between border-b border-gray-200 pb-3">
           <div>
-            <h3 className="font-bold text-base text-white">Customer Account Sign In</h3>
-            <p className="text-[11px] text-slate-400">Sign in to save AI try-on looks &amp; track orders</p>
+            <h3 className="font-bold text-base text-gray-900">Customer Account Sign In</h3>
+            <p className="text-[11px] text-gray-500">Sign in to save AI try-on looks &amp; track orders</p>
           </div>
-          <button onClick={onClose} className="text-slate-400 hover:text-white transition-colors">✕</button>
+          <button onClick={onClose} className="text-gray-500 hover:text-black transition-colors">✕</button>
         </div>
 
         {(oauthProviders.google || oauthProviders.github) && (
@@ -124,7 +124,7 @@ export function AuthModal({ isOpen, onClose }: AuthModalProps) {
                 <button
                   type="button"
                   onClick={() => signIn('google')}
-                  className="w-full py-2.5 px-4 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 text-white font-semibold text-xs flex items-center justify-center gap-2.5 transition-colors"
+                  className="w-full py-2.5 px-4 rounded-xl bg-gray-100 hover:bg-gray-200 border border-gray-300 text-gray-900 font-semibold text-xs flex items-center justify-center gap-2.5 transition-colors"
                 >
                   Continue with Google
                 </button>
@@ -134,7 +134,7 @@ export function AuthModal({ isOpen, onClose }: AuthModalProps) {
                 <button
                   type="button"
                   onClick={() => signIn('github')}
-                  className="w-full py-2.5 px-4 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 text-white font-semibold text-xs flex items-center justify-center gap-2.5 transition-colors"
+                  className="w-full py-2.5 px-4 rounded-xl bg-gray-100 hover:bg-gray-200 border border-gray-300 text-gray-900 font-semibold text-xs flex items-center justify-center gap-2.5 transition-colors"
                 >
                   Continue with GitHub
                 </button>
@@ -142,9 +142,9 @@ export function AuthModal({ isOpen, onClose }: AuthModalProps) {
             </div>
 
             <div className="relative flex items-center justify-center">
-              <div className="border-t border-slate-800 w-full" />
-              <span className="bg-slate-900 px-3 text-[10px] text-slate-500 uppercase font-mono">or email credentials</span>
-              <div className="border-t border-slate-800 w-full" />
+              <div className="border-t border-gray-200 w-full" />
+              <span className="bg-white px-3 text-[10px] text-gray-500 uppercase font-mono">or email credentials</span>
+              <div className="border-t border-gray-200 w-full" />
             </div>
           </>
         )}
@@ -152,7 +152,7 @@ export function AuthModal({ isOpen, onClose }: AuthModalProps) {
         {/* Credentials Form */}
         <form onSubmit={handleSubmit(onCredentialsSubmit)} className="space-y-3 text-xs">
           {errorMsg && (
-            <div className="p-2.5 rounded-xl bg-rose-500/15 border border-rose-500/30 text-rose-300 text-xs space-y-2">
+            <div className="p-2.5 rounded-xl bg-rose-500/15 border border-rose-500/30 text-rose-700 text-xs space-y-2">
               <p>{errorMsg}</p>
               {unverifiedEmail && (
                 <div className="flex flex-wrap gap-2">
@@ -160,7 +160,7 @@ export function AuthModal({ isOpen, onClose }: AuthModalProps) {
                     type="button"
                     onClick={handleResend}
                     disabled={resendLoading}
-                    className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-rose-500/20 hover:bg-rose-500/30 text-rose-200 font-semibold"
+                    className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-rose-500/20 hover:bg-rose-500/30 text-rose-800 font-semibold"
                   >
                     {resendLoading ? <Loader2 className="w-3 h-3 animate-spin" /> : <MailCheck className="w-3 h-3" />}
                     <span>Resend Email</span>
@@ -168,7 +168,7 @@ export function AuthModal({ isOpen, onClose }: AuthModalProps) {
                   <Link
                     href={`/verify-email?email=${encodeURIComponent(unverifiedEmail)}`}
                     onClick={onClose}
-                    className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-white font-semibold"
+                    className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-gray-100 hover:bg-gray-200 text-gray-900 font-semibold"
                   >
                     <span>Verify Code</span>
                     <ArrowRight className="w-3 h-3" />
@@ -179,7 +179,7 @@ export function AuthModal({ isOpen, onClose }: AuthModalProps) {
           )}
 
           {resendMessage && (
-            <div className="p-2.5 rounded-xl bg-sky-500/15 border border-sky-500/30 text-sky-300 text-xs">
+            <div className="p-2.5 rounded-xl bg-gray-100 border border-gray-300 text-black text-xs">
               {resendMessage}
             </div>
           )}
@@ -187,24 +187,24 @@ export function AuthModal({ isOpen, onClose }: AuthModalProps) {
           <DevEmailPreviewCard preview={devPreview} actionLabel="Verify Email Now" />
 
           <div>
-            <label className="block text-slate-400 mb-1">Email Address *</label>
+            <label className="block text-gray-500 mb-1">Email Address *</label>
             <Input
               type="email"
               {...register('email')}
               className={errors.email ? 'border-rose-500' : ''}
             />
             {errors.email && (
-              <p className="text-rose-400 text-[11px] mt-1 font-medium">{errors.email.message}</p>
+              <p className="text-rose-600 text-[11px] mt-1 font-medium">{errors.email.message}</p>
             )}
           </div>
 
           <div>
             <div className="flex items-center justify-between mb-1">
-              <label className="block text-slate-400">Password *</label>
+              <label className="block text-gray-500">Password *</label>
               <Link
                 href="/forgot-password"
                 onClick={onClose}
-                className="text-[11px] text-purple-400 hover:text-purple-300 font-medium"
+                className="text-[11px] text-black hover:text-gray-700 font-medium"
               >
                 Forgot password?
               </Link>
@@ -219,34 +219,34 @@ export function AuthModal({ isOpen, onClose }: AuthModalProps) {
                 type="button"
                 tabIndex={-1}
                 onClick={() => setShowPassword((prev) => !prev)}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white"
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-black"
               >
                 {showPassword ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
               </button>
             </div>
             {errors.password && (
-              <p className="text-rose-400 text-[11px] mt-1 font-medium">{errors.password.message}</p>
+              <p className="text-rose-600 text-[11px] mt-1 font-medium">{errors.password.message}</p>
             )}
           </div>
 
           <Button
             type="submit"
             disabled={isSubmitting}
-            className="w-full bg-purple-600 hover:bg-purple-500 text-white font-bold"
+            className="w-full bg-black hover:bg-gray-800 text-white font-bold"
           >
             {isSubmitting ? 'Signing In...' : 'Sign In with Email'}
           </Button>
 
         </form>
 
-        <div className="pt-2 border-t border-slate-800 flex items-center justify-between text-[11px] text-slate-400">
+        <div className="pt-2 border-t border-gray-200 flex items-center justify-between text-[11px] text-gray-500">
           <span>
             New here?{' '}
-            <Link href="/register" onClick={onClose} className="text-purple-400 hover:text-purple-300 font-semibold">
+            <Link href="/register" onClick={onClose} className="text-black hover:text-gray-700 font-semibold">
               Create account
             </Link>
           </span>
-          <Link href="/login" onClick={onClose} className="text-slate-300 hover:text-white font-medium">
+          <Link href="/login" onClick={onClose} className="text-gray-700 hover:text-black font-medium">
             Full login page →
           </Link>
         </div>

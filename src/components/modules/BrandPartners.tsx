@@ -13,11 +13,11 @@ interface BrandPartnersProps {
 
 export function BrandPartners({ brands, selectedBrand, onSelectBrand }: BrandPartnersProps) {
   return (
-    <section className="border-b border-slate-800/80 bg-slate-950 py-6 px-6">
+    <section className="border-b border-gray-200 bg-white py-6 px-6">
       <div className="max-w-7xl mx-auto">
         <div className="flex items-center justify-between mb-4">
-          <h2 className="text-xs font-bold uppercase tracking-widest text-slate-400">Curated Boutique Partners</h2>
-          <span className="text-xs text-purple-400 font-semibold">{brands.length} Independent Brands</span>
+          <h2 className="text-xs font-bold uppercase tracking-widest text-gray-500">Curated Boutique Partners</h2>
+          <span className="text-xs text-black font-semibold">{brands.length} Independent Brands</span>
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -26,7 +26,7 @@ export function BrandPartners({ brands, selectedBrand, onSelectBrand }: BrandPar
               key={brand.slug}
               onClick={() => onSelectBrand(selectedBrand === brand.name ? 'All' : brand.name)}
               className={`p-4 rounded-2xl fashion-card border transition-all cursor-pointer flex items-center justify-between ${
-                selectedBrand === brand.name ? 'border-purple-500/80 bg-purple-950/20 shadow-lg shadow-purple-500/10' : 'border-slate-800 hover:border-slate-700'
+                selectedBrand === brand.name ? 'border-gray-300 bg-gray-100 shadow-lg shadow-black/10' : 'border-gray-200 hover:border-gray-300'
               }`}
             >
               <div className="flex items-center gap-3">
@@ -38,16 +38,16 @@ export function BrandPartners({ brands, selectedBrand, onSelectBrand }: BrandPar
                   className="w-12 h-12 rounded-xl object-cover ring-1 ring-white/10"
                 />
                 <div>
-                  <h3 className="font-bold text-sm text-white flex items-center gap-1.5">
+                  <h3 className="font-bold text-sm text-gray-900 flex items-center gap-1.5">
                     {brand.name}
-                    <ShieldCheck className="w-3.5 h-3.5 text-sky-400" />
+                    <ShieldCheck className="w-3.5 h-3.5 text-black" />
                   </h3>
-                  <p className="text-xs text-slate-400">{brand.tagline}</p>
+                  <p className="text-xs text-gray-500">{brand.tagline}</p>
                 </div>
               </div>
 
               <div className="text-right">
-                <span className="text-xs font-semibold px-2.5 py-1 rounded-full bg-slate-900 border border-slate-800 text-slate-300">
+                <span className="text-xs font-semibold px-2.5 py-1 rounded-full bg-white border border-gray-200 text-gray-700">
                   {brand.productCount} Garments
                 </span>
               </div>
