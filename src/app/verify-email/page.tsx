@@ -26,19 +26,20 @@ function VerifyEmailContent() {
   const searchParams = useSearchParams();
   const urlToken = searchParams.get('token');
   const urlEmail = searchParams.get('email') || '';
+  const urlWarning = searchParams.get('warning');
   const fromRegister = searchParams.get('from') === 'register';
   const isEmailLocked = Boolean(urlEmail);
   const callbackUrl = sanitizeCallbackUrl(searchParams.get('callbackUrl'));
 
   const [status, setStatus] = useState<'idle' | 'verifying' | 'verified' | 'error'>(
-    urlToken ? 'verifying' : 'idle'
+    urlToken ? 'verifying' : urlWarning ? 'error' : 'idle'
   );
-  const [message, setMessage] = useState<string | null>(null);
+  const [message, setMessage] = useState<string | null>(urlWarning);
   const [resending, setResending] = useState(false);
   const [cooldown, setCooldown] = useState(0);
   const [devPreview, setDevPreview] = useState<DevEmailPreview | null>(null);
   const [toastMsg, setToastMsg] = useState<string | null>(
-    fromRegister && urlEmail
+    fromRegister && urlEmail && !urlWarning
       ? `Verification code sent to ${urlEmail}. Check your inbox (or spam folder) and enter the 6-digit code below.`
       : null
   );

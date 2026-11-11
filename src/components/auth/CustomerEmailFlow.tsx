@@ -97,7 +97,7 @@ export function CustomerEmailFlow({
     try {
       const check = await marketplaceApi.auth.checkEmail(cleanEmail);
       if (check.portalMismatch) {
-        setErrorMsg(check.message || 'Please sign in on your Brand or Admin portal.');
+        setErrorMsg('This email address is already in use. Please use a different email address.');
         return;
       }
 
@@ -161,8 +161,12 @@ export function CustomerEmailFlow({
       });
       persistPendingVerifyPreview(res.user.email, res.devPreview);
       onNavigate?.();
+      const warningParam =
+        res.emailDelivered === false && res.warning
+          ? `&warning=${encodeURIComponent(res.warning)}`
+          : '';
       router.push(
-        `/verify-email?email=${encodeURIComponent(res.user.email)}&from=register&callbackUrl=${encodeURIComponent(callbackUrl)}`
+        `/verify-email?email=${encodeURIComponent(res.user.email)}&from=register&callbackUrl=${encodeURIComponent(callbackUrl)}${warningParam}`
       );
     } catch (err: any) {
       setErrorMsg(err?.message || 'Could not create your account. Please try again.');

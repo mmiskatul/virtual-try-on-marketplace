@@ -19,7 +19,7 @@ function formatAuthError(code: string | null): string | null {
   if (!code) return null;
   switch (code) {
     case 'PortalMismatch':
-      return 'This Google email belongs to a Brand or Admin account. Please sign in on that portal.';
+      return 'This email address is already in use. Please use a different Google account or email address.';
     case 'GoogleSyncFailed':
       return 'Unable to complete Google sign-in with the backend. Please try again.';
     case 'AccessDenied':

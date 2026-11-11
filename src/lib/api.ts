@@ -70,6 +70,8 @@ export const marketplaceApi = {
       return request<{
         message: string;
         requiresEmailVerification: boolean;
+        emailDelivered?: boolean;
+        warning?: string;
         user: { id: string; name: string; email: string; role: string; emailVerified: boolean };
         devPreview?: DevEmailPreview;
       }>(`${MARKETPLACE_API_URL}/api/v1/marketplace/auth/register`, {
