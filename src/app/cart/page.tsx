@@ -108,7 +108,7 @@ export default function CartPage() {
                     <span className="text-xs font-bold text-stone-800">
                       {group.shippingFee === 0
                         ? 'Complimentary Shipping'
-                        : `Brand Shipping: $${group.shippingFee.toFixed(2)}`}
+                        : `Brand Shipping: ৳${group.shippingFee.toFixed(2)}`}
                     </span>
                   </div>
 
@@ -142,12 +142,12 @@ export default function CartPage() {
                               </p>
                               <div className="flex items-baseline gap-2 pt-0.5">
                                 <span className="text-sm font-extrabold text-stone-950">
-                                  ${item.product.price}
+                                  ৳{item.product.price}
                                 </span>
                                 {item.product.compareAtPrice &&
                                   item.product.compareAtPrice > item.product.price && (
                                     <span className="text-xs text-stone-400 line-through">
-                                      ${item.product.compareAtPrice}
+                                      ৳{item.product.compareAtPrice}
                                     </span>
                                   )}
                               </div>
@@ -211,18 +211,18 @@ export default function CartPage() {
               <div className="space-y-2.5 text-xs">
                 <div className="flex justify-between text-stone-600">
                   <span>Items ({totalItemCount} across {groups.length} brand{groups.length > 1 ? 's' : ''})</span>
-                  <span className="font-bold text-stone-950">${subtotal.toFixed(2)}</span>
+                  <span className="font-bold text-stone-950">৳{subtotal.toFixed(2)}</span>
                 </div>
                 {totalSavings > 0 && (
                   <div className="flex justify-between text-emerald-700 font-semibold">
                     <span>Markdown Discount</span>
-                    <span>-${totalSavings.toFixed(2)}</span>
+                    <span>-৳{totalSavings.toFixed(2)}</span>
                   </div>
                 )}
                 <div className="flex justify-between text-stone-600">
                   <span>Delivery Estimate</span>
                   <span className="font-bold text-stone-950">
-                    {totalShipping === 0 ? 'FREE' : `$${totalShipping.toFixed(2)}`}
+                    {totalShipping === 0 ? 'FREE' : `৳${totalShipping.toFixed(2)}`}
                   </span>
                 </div>
               </div>
@@ -230,7 +230,7 @@ export default function CartPage() {
               <div className="border-t border-stone-200 pt-4 flex items-center justify-between">
                 <span className="text-sm font-bold text-stone-950">Estimated Total</span>
                 <span className="text-2xl font-extrabold text-stone-950">
-                  ${estimatedTotal.toFixed(2)}
+                  ৳{estimatedTotal.toFixed(2)}
                 </span>
               </div>
 
@@ -266,7 +266,7 @@ export default function CartPage() {
                   <div className="flex-1 min-w-0 space-y-1">
                     <p className="text-[10px] font-bold uppercase text-stone-500">{s.product.brandName}</p>
                     <p className="text-xs font-bold text-stone-900 truncate">{s.product.name}</p>
-                    <p className="text-xs font-extrabold">${s.product.price}</p>
+                    <p className="text-xs font-extrabold">৳{s.product.price}</p>
                     <div className="flex gap-2 pt-1">
                       <button
                         type="button"

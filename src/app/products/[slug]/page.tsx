@@ -287,10 +287,10 @@ export default function ProductDetailsPage() {
               </div>
 
               <div className="flex items-baseline gap-3 pt-1">
-                <span className="text-3xl font-extrabold text-stone-950">${product.price}</span>
+                <span className="text-3xl font-extrabold text-stone-950">৳{product.price}</span>
                 {product.compareAtPrice && product.compareAtPrice > product.price && (
                   <>
-                    <span className="text-base text-stone-400 line-through">${product.compareAtPrice}</span>
+                    <span className="text-base text-stone-400 line-through">৳{product.compareAtPrice}</span>
                     <span className="px-2.5 py-0.5 rounded-full bg-rose-100 text-rose-700 text-xs font-bold">
                       Save {product.discountPercent}%
                     </span>
@@ -546,7 +546,7 @@ export default function ProductDetailsPage() {
             {activeTab === 'shipping' && (
               <div className="max-w-2xl space-y-2">
                 <p className="font-bold text-stone-950">Direct Brand Courier Dispatch</p>
-                <p>{product.shippingPolicy || `Delivered by ${product.brandName}. Single-brand baskets over $150 ship free.`}</p>
+                <p>{product.shippingPolicy || `Delivered by ${product.brandName}. Single-brand baskets over ৳1,500 ship free.`}</p>
               </div>
             )}
 

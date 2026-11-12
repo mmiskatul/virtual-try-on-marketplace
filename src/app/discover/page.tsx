@@ -262,7 +262,7 @@ function DiscoverContent() {
       <div className="space-y-3 pt-4 border-t border-stone-200">
         <div className="flex items-center justify-between">
           <h3 className="font-bold uppercase tracking-wider text-[11px] text-stone-900">Price Range</h3>
-          <span className="font-mono font-bold text-stone-800">${minPrice} – ${maxPrice}</span>
+          <span className="font-mono font-bold text-stone-800">৳{minPrice} – ৳{maxPrice}</span>
         </div>
         <input
           type="range"

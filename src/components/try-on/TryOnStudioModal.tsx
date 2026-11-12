@@ -174,7 +174,7 @@ export function TryOnStudioModal({
               </p>
               <p className="text-xs font-bold text-stone-950 truncate">{product.name}</p>
               <p className="text-xs text-stone-600 font-semibold mt-0.5">
-                ${product.price} • Size {size} • {color}
+                ৳{product.price} • Size {size} • {color}
               </p>
             </div>
           </div>

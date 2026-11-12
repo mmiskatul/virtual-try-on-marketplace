@@ -108,7 +108,7 @@ export default function CheckoutPage() {
     const res = evaluatePromoCode(promoInput, subtotal);
     if (res.valid) {
       setAppliedPromo(promoInput.trim().toUpperCase());
-      setPromoMsg(`Applied ${res.label} — Saved $${res.discountAmount.toFixed(2)}`);
+      setPromoMsg(`Applied ${res.label} — Saved ৳${res.discountAmount.toFixed(2)}`);
     } else {
       setAppliedPromo('');
       setPromoMsg(res.message || 'Invalid code');
@@ -212,7 +212,7 @@ export default function CheckoutPage() {
                       Ref: <span className="font-mono">{g.orderRef}</span> • {g.deliveryMethod} ({g.deliveryEstimate})
                     </p>
                   </div>
-                  <span className="font-extrabold text-stone-950">${g.subtotal.toFixed(2)}</span>
+                  <span className="font-extrabold text-stone-950">৳{g.subtotal.toFixed(2)}</span>
                 </div>
               ))}
             </div>
@@ -432,19 +432,19 @@ export default function CheckoutPage() {
                         id: 'standard',
                         name: 'Standard Atelier Courier',
                         desc: 'Estimated 2–4 business days per brand',
-                        fee: baseShipping === 0 ? 'Included (Free)' : `$${baseShipping}`,
+                        fee: baseShipping === 0 ? 'Included (Free)' : `৳${baseShipping}`,
                       },
                       {
                         id: 'express',
                         name: 'Priority Air Dispatch',
                         desc: 'Tracked 1–2 business days priority parcel',
-                        fee: '+$6.00',
+                        fee: '+৳6.00',
                       },
                       {
                         id: 'same-day',
                         name: 'Same-Day Express (Dhaka Metro)',
                         desc: 'Same evening doorstep delivery for local brands',
-                        fee: '+$10.00',
+                        fee: '+৳10.00',
                       },
                     ].map((opt) => (
                       <label
@@ -497,7 +497,7 @@ export default function CheckoutPage() {
                         <div className="flex items-center justify-between border-b border-stone-100 pb-2 text-xs">
                           <span className="font-bold text-stone-950">{g.brandName}</span>
                           <span className="text-stone-500">
-                            {g.shippingFee === 0 ? 'Free Shipping' : `Shipping $${g.shippingFee}`} • {g.deliveryEstimate}
+                            {g.shippingFee === 0 ? 'Free Shipping' : `Shipping ৳${g.shippingFee}`} • {g.deliveryEstimate}
                           </span>
                         </div>
                         {g.items.map((item) => (
@@ -511,7 +511,7 @@ export default function CheckoutPage() {
                                 <p className="text-stone-500">Size {item.size} × {item.quantity}</p>
                               </div>
                             </div>
-                            <span className="font-bold">${(item.product.price * item.quantity).toFixed(2)}</span>
+                            <span className="font-bold">৳{(item.product.price * item.quantity).toFixed(2)}</span>
                           </div>
                         ))}
                       </div>
@@ -620,29 +620,29 @@ export default function CheckoutPage() {
               <div className="space-y-2 text-xs">
                 <div className="flex justify-between text-stone-600">
                   <span>Merchandise Subtotal</span>
-                  <span className="font-bold text-stone-950">${subtotal.toFixed(2)}</span>
+                  <span className="font-bold text-stone-950">৳{subtotal.toFixed(2)}</span>
                 </div>
                 {discountAmount > 0 && (
                   <div className="flex justify-between text-emerald-700 font-semibold">
                     <span>Promo ({appliedPromo})</span>
-                    <span>-${discountAmount.toFixed(2)}</span>
+                    <span>-৳{discountAmount.toFixed(2)}</span>
                   </div>
                 )}
                 <div className="flex justify-between text-stone-600">
                   <span>Shipping ({groups.length} brand{groups.length > 1 ? 's' : ''})</span>
                   <span className="font-bold text-stone-950">
-                    {totalShipping === 0 ? 'FREE' : `$${totalShipping.toFixed(2)}`}
+                    {totalShipping === 0 ? 'FREE' : `৳${totalShipping.toFixed(2)}`}
                   </span>
                 </div>
                 <div className="flex justify-between text-stone-600">
                   <span>Estimated VAT / Tax (5%)</span>
-                  <span className="font-bold text-stone-950">${taxAmount.toFixed(2)}</span>
+                  <span className="font-bold text-stone-950">৳{taxAmount.toFixed(2)}</span>
                 </div>
               </div>
 
               <div className="border-t border-stone-200 pt-3 flex items-center justify-between">
                 <span className="font-bold text-stone-950">Total</span>
-                <span className="text-2xl font-extrabold text-stone-950">${grandTotal.toFixed(2)}</span>
+                <span className="text-2xl font-extrabold text-stone-950">৳{grandTotal.toFixed(2)}</span>
               </div>
 
               <div className="space-y-2 pt-2 border-t border-stone-100">

@@ -195,7 +195,7 @@ export const SEED_BRANDS: BrandPartner[] = [
     productCount: 7,
     isFeatured: true,
     accentColor: '#1C1917',
-    announcement: 'Complimentary express delivery on orders over $150',
+    announcement: 'Complimentary express delivery on orders over ৳1,500',
     deliveryEstimate: '2–4 business days',
     returnPolicy: '30-day complimentary returns with unworn tags',
     socialLinks: { instagram: '@auraatelier', website: 'auraatelier.example.com' },
@@ -1945,7 +1945,7 @@ export const DEFAULT_PAYMENT_METHODS: PaymentMethodOption[] = [
   {
     id: 'bkash',
     name: 'bKash Mobile Wallet',
-    subtitle: 'Instant tokenized checkout via bKash app or OTP (BDT / USD conversion)',
+    subtitle: 'Instant tokenized checkout via bKash app or OTP (BDT ৳)',
     badge: 'Bangladesh Popular',
     enabled: true,
     regions: ['Bangladesh'],

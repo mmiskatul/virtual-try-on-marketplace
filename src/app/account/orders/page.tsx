@@ -93,7 +93,7 @@ export default function AccountOrdersPage() {
                             <p className="text-stone-500">Size {item.size} × {item.quantity}</p>
                           </div>
                         </div>
-                        <span className="font-bold">${(item.product.price * item.quantity).toFixed(2)}</span>
+                        <span className="font-bold">৳{(item.product.price * item.quantity).toFixed(2)}</span>
                       </div>
                     ))}
                   </div>

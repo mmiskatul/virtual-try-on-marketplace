@@ -19,7 +19,7 @@ const POLICY_DETAILS: Record<Exclude<PolicyTopic, null>, { title: string; points
     title: 'Shipping & Brand Return Policies',
     points: [
       'Each independent brand fulfills directly from its verified atelier or warehouse within 1–5 business days.',
-      'Single-brand baskets over $150 qualify for complimentary express courier shipping.',
+      'Single-brand baskets over ৳1,500 qualify for complimentary express courier shipping.',
       'Returns and size exchanges are handled transparently per brand (7–30 days depending on garment category).',
     ],
   },

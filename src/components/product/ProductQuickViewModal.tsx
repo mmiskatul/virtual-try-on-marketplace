@@ -76,10 +76,10 @@ export function ProductQuickViewModal({
             </div>
 
             <div className="flex items-baseline gap-2.5">
-              <span className="text-2xl font-extrabold text-stone-950">${product.price}</span>
+              <span className="text-2xl font-extrabold text-stone-950">৳{product.price}</span>
               {product.compareAtPrice && product.compareAtPrice > product.price && (
                 <>
-                  <span className="text-sm text-stone-400 line-through">${product.compareAtPrice}</span>
+                  <span className="text-sm text-stone-400 line-through">৳{product.compareAtPrice}</span>
                   <span className="text-xs font-bold text-rose-600">Save {product.discountPercent}%</span>
                 </>
               )}

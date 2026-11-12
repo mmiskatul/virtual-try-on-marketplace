@@ -30,7 +30,7 @@ const INITIAL_NOTIFICATIONS: AppNotification[] = [
     id: 'notif_2',
     type: 'discount',
     title: '10% Welcome Code Active: VTRY10',
-    message: 'Apply code VTRY10 at checkout across participating brands or enjoy free shipping over $150.',
+    message: 'Apply code VTRY10 at checkout across participating brands or enjoy free shipping over ৳1,500.',
     href: '/discover?onSale=true',
     read: false,
     createdAt: '2026-11-10T22:00:00.000Z',

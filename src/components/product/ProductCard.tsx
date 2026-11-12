@@ -163,9 +163,9 @@ export function ProductCard({
         {/* Price + Quick Add */}
         <div className="pt-2.5 border-t border-stone-100 flex items-center justify-between gap-2">
           <div className="flex items-baseline gap-1.5">
-            <span className="text-base font-extrabold text-stone-950">${product.price}</span>
+            <span className="text-base font-extrabold text-stone-950">৳{product.price}</span>
             {product.compareAtPrice && product.compareAtPrice > product.price && (
-              <span className="text-xs text-stone-400 line-through">${product.compareAtPrice}</span>
+              <span className="text-xs text-stone-400 line-through">৳{product.compareAtPrice}</span>
             )}
           </div>
 

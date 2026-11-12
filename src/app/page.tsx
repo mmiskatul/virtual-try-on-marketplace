@@ -55,7 +55,7 @@ export default function MarketplaceHomePage() {
               offers: {
                 '@type': 'Offer',
                 price: p.price,
-                priceCurrency: 'USD',
+                priceCurrency: 'BDT',
               },
             },
           })),

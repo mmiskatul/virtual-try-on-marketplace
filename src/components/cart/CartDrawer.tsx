@@ -79,7 +79,7 @@ export function CartDrawer({ isOpen: propOpen, onClose: propClose }: CartDrawerP
                     {group.brandName}
                   </Link>
                   <span className="text-[10px] text-stone-500">
-                    {group.shippingFee === 0 ? 'Free shipping' : `Est. shipping $${group.shippingFee}`}
+                    {group.shippingFee === 0 ? 'Free shipping' : `Est. shipping ৳${group.shippingFee}`}
                   </span>
                 </div>
 

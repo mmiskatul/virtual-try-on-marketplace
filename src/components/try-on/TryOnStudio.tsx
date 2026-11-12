@@ -504,7 +504,7 @@ export function TryOnStudio({
                   </Link>
                   <h3 className="font-bold text-sm text-stone-950">{selectedProduct.name}</h3>
                 </div>
-                <span className="text-base font-extrabold text-stone-950">${selectedProduct.price}</span>
+                <span className="text-base font-extrabold text-stone-950">৳{selectedProduct.price}</span>
               </div>
 
               {/* Size & Color Settings */}
@@ -621,7 +621,7 @@ export function TryOnStudio({
                         {item.brandName}
                       </p>
                       <p className="text-xs font-bold text-stone-900 truncate">{item.name}</p>
-                      <p className="text-xs font-extrabold text-stone-950 mt-0.5">${item.price}</p>
+                      <p className="text-xs font-extrabold text-stone-950 mt-0.5">৳{item.price}</p>
                     </div>
                   </button>
                 );

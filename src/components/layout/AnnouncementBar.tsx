@@ -22,7 +22,7 @@ const DEFAULT_ANNOUNCEMENTS: AnnouncementMessage[] = [
   },
   {
     id: 'free_shipping',
-    text: 'Complimentary Express Delivery on single-brand orders over $150',
+    text: 'Complimentary Express Delivery on single-brand orders over ৳1,500',
     ctaLabel: 'Shop Discover',
     ctaHref: '/discover',
   },

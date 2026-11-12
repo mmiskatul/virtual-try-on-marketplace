@@ -69,7 +69,7 @@ export default function AccountDashboardPage() {
                     <p className="font-mono font-bold text-stone-950">{ord.id}</p>
                     <p className="text-stone-500">{ord.groups.length} brand parcel(s) • {ord.status}</p>
                   </div>
-                  <span className="font-extrabold text-stone-950">${ord.totalAmount.toFixed(2)}</span>
+                  <span className="font-extrabold text-stone-950">৳{ord.totalAmount.toFixed(2)}</span>
                 </div>
               ))}
             </div>
