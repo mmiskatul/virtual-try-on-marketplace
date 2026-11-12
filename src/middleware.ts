@@ -1,13 +1,58 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 import { getToken } from 'next-auth/jwt';
+import {
+  MKT_ACCESS_COOKIE,
+  MKT_REFRESH_COOKIE,
+  MKT_SESSION_COOKIE,
+  buildMktCookieHeader,
+  exchangeMktOAuthCodeFromBackend,
+  isAllowedCustomerRole,
+  isValidMktAccessCookie,
+  isValidMktRefreshCookie,
+  refreshMktSessionFromBackend,
+  sanitizeMktCallbackUrl,
+  verifyMktSessionWithBackend,
+} from './lib/portal-auth';
 
 export const config = {
   matcher: ['/((?!_next/static|_next/image|favicon.ico).*)'],
 };
 
-// Protected routes requiring verified customer authentication at the routing edge
-const PROTECTED_ROUTES = ['/checkout', '/orders', '/account', '/saved-looks', '/api/checkout'];
+const AUTH_ENTRY_PATHS = ['/login', '/register'];
+const PROTECTED_ROUTES = ['/checkout', '/orders', '/account', '/saved-looks', '/notifications', '/api/checkout'];
+const PUBLIC_META_PREFIXES = ['/api/auth', '/manifest.webmanifest', '/robots.txt', '/sitemap.xml'];
+
+function buildMergedCookieHeader(rawCookie: string | null, setCookies: string[]): string {
+  const cookieMap = new Map<string, string>();
+  if (rawCookie) {
+    for (const part of rawCookie.split(';')) {
+      const idx = part.indexOf('=');
+      if (idx > 0) {
+        const k = part.slice(0, idx).trim();
+        const v = part.slice(idx + 1).trim();
+        if (k) cookieMap.set(k, v);
+      }
+    }
+  }
+  for (const sc of setCookies) {
+    const firstSemi = sc.indexOf(';');
+    const kv = (firstSemi >= 0 ? sc.slice(0, firstSemi) : sc).trim();
+    const idx = kv.indexOf('=');
+    if (idx > 0) {
+      const k = kv.slice(0, idx).trim();
+      const v = kv.slice(idx + 1).trim();
+      if (!v || /;\s*Max-Age=0\b/i.test(sc)) {
+        cookieMap.delete(k);
+      } else {
+        cookieMap.set(k, v);
+      }
+    }
+  }
+  return Array.from(cookieMap.entries())
+    .map(([k, v]) => `${k}=${v}`)
+    .join('; ');
+}
 
 /**
  * Generate a strict, dynamic Content Security Policy (CSP) with a cryptographic nonce.
@@ -33,7 +78,6 @@ function createContentSecurityPolicy(nonce: string) {
     .trim();
 }
 
-// --- Strict Edge CORS Configuration ---
 const ALLOWED_ORIGIN_PATTERNS = [
   /^https?:\/\/localhost(:\d+)?$/,
   /^https?:\/\/127\.0\.0\.1(:\d+)?$/,
@@ -42,7 +86,7 @@ const ALLOWED_ORIGIN_PATTERNS = [
 ];
 
 function isOriginAllowed(origin: string | null, requestOrigin?: string): boolean {
-  if (!origin) return true; // Server-to-server or same-origin
+  if (!origin) return true;
   if (requestOrigin && origin === requestOrigin) return true;
   const configuredSiteUrl = process.env.NEXT_PUBLIC_SITE_URL;
   if (configuredSiteUrl) {
@@ -55,7 +99,6 @@ function isOriginAllowed(origin: string | null, requestOrigin?: string): boolean
   return ALLOWED_ORIGIN_PATTERNS.some((p) => p.test(origin));
 }
 
-// --- Edge Sliding-Window Rate Limiting ---
 interface RateLimitRecord {
   count: number;
   resetAt: number;
@@ -66,7 +109,7 @@ let lastCleanup = Date.now();
 
 function checkEdgeRateLimit(
   clientIp: string,
-  pathname: string
+  pathname: string,
 ): { success: boolean; limit: number; remaining: number; reset: number } {
   const now = Date.now();
   if (now - lastCleanup > 300000) {
@@ -101,7 +144,8 @@ function checkEdgeRateLimit(
 }
 
 /**
- * Edge Runtime Middleware with Token Verification, Strict CORS & Edge Rate Limiting
+ * Edge Runtime Middleware enforcing HttpOnly session/access/refresh cookies,
+ * NextAuth JWT alignment, silent refresh rotation, Strict CORS & Edge Rate Limiting.
  */
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
@@ -116,7 +160,7 @@ export async function middleware(request: NextRequest) {
     if (origin && !isOriginAllowed(origin, request.nextUrl.origin)) {
       return NextResponse.json(
         { error: 'Forbidden', message: 'Cross-origin request blocked by Edge CORS policy' },
-        { status: 403 }
+        { status: 403 },
       );
     }
 
@@ -155,55 +199,200 @@ export async function middleware(request: NextRequest) {
           'X-RateLimit-Remaining': '0',
           'X-RateLimit-Reset': String(rateLimit.reset),
         },
-      }
+      },
     );
   }
 
-  // 3. Generate Cryptographic Nonce using Web Crypto
+  // 3. Generate Cryptographic Nonce & Shared Response Header Helper
   const nonce = btoa(crypto.randomUUID());
   const cspHeader = createContentSecurityPolicy(nonce);
+  const geoCountry = request.geo?.country || request.headers.get('x-vercel-ip-country') || 'US';
+  const geoCity = request.geo?.city || request.headers.get('x-vercel-ip-city') || 'Edge';
+  let clearStaleAuthCookies = false;
 
-  // 4. Edge Token & Session Verification using NextAuth JWT
+  const applyResponseHeaders = (
+    res: NextResponse,
+    setCookiesToForward: string[] = [],
+  ) => {
+    res.headers.set('Content-Security-Policy', cspHeader);
+    res.headers.set('x-nonce', nonce);
+    res.headers.set('x-content-type-options', 'nosniff');
+    res.headers.set('x-frame-options', 'DENY');
+    res.headers.set('x-xss-protection', '1; mode=block');
+    res.headers.set('x-edge-geo', `${geoCity}, ${geoCountry}`);
+    res.headers.set('x-edge-runtime', 'vercel-edge-v8');
+    res.headers.set('X-RateLimit-Limit', String(rateLimit.limit));
+    res.headers.set('X-RateLimit-Remaining', String(rateLimit.remaining));
+    res.headers.set('X-RateLimit-Reset', String(rateLimit.reset));
+    if (origin && isOriginAllowed(origin)) {
+      res.headers.set('Access-Control-Allow-Origin', origin);
+      res.headers.set('Access-Control-Allow-Credentials', 'true');
+    }
+    if (clearStaleAuthCookies) {
+      res.cookies.delete(MKT_ACCESS_COOKIE);
+      res.cookies.delete(MKT_REFRESH_COOKIE);
+      res.cookies.delete(MKT_SESSION_COOKIE);
+      res.cookies.delete('next-auth.session-token');
+      res.cookies.delete('__Secure-next-auth.session-token');
+    }
+    for (const sc of setCookiesToForward) {
+      res.headers.append('set-cookie', sc);
+    }
+    return res;
+  };
+
+  // NextAuth API routes & static SEO files pass through without auth gating
+  if (PUBLIC_META_PREFIXES.some((prefix) => pathname.startsWith(prefix))) {
+    const requestHeaders = new Headers(request.headers);
+    requestHeaders.set('x-nonce', nonce);
+    requestHeaders.set('Content-Security-Policy', cspHeader);
+    requestHeaders.set('x-edge-routed', 'true');
+    requestHeaders.set('x-edge-runtime', 'vercel-edge-v8');
+    return applyResponseHeaders(NextResponse.next({ request: { headers: requestHeaders } }));
+  }
+
+  // 4. Verify BOTH NextAuth session JWT AND HttpOnly marketplace session/access/refresh cookies
   const token = await getToken({
     req: request,
     secret: process.env.NEXTAUTH_SECRET,
   });
 
-  const isProtectedRoute = PROTECTED_ROUTES.some((route) => pathname.startsWith(route));
+  const nextAuthUserId =
+    typeof token?.id === 'string'
+      ? token.id
+      : typeof token?.sub === 'string'
+        ? token.sub
+        : '';
+  const hasNextAuthCustomer = Boolean(
+    token && nextAuthUserId && isAllowedCustomerRole(token.role || 'CUSTOMER'),
+  );
 
-  // 5. Block unauthorized requests immediately at the routing edge
-  if (isProtectedRoute && !token) {
+  const accessCookie = request.cookies.get(MKT_ACCESS_COOKIE)?.value;
+  const refreshCookie = request.cookies.get(MKT_REFRESH_COOKIE)?.value;
+  const sessionCookie = request.cookies.get(MKT_SESSION_COOKIE)?.value;
+
+  const isProtectedRoute = PROTECTED_ROUTES.some(
+    (route) => pathname === route || pathname.startsWith(`${route}/`),
+  );
+  const isAuthEntryPage = AUTH_ENTRY_PATHS.some(
+    (p) => pathname === p || pathname.startsWith(`${p}/`),
+  );
+  const isVerifyWithoutCode =
+    pathname.startsWith('/verify-email') &&
+    !request.nextUrl.searchParams.has('token') &&
+    !request.nextUrl.searchParams.has('code');
+
+  let hasValidAccess =
+    hasNextAuthCustomer && isValidMktAccessCookie(accessCookie, nextAuthUserId, sessionCookie);
+
+  if (hasValidAccess && accessCookie) {
+    const backendSession = await verifyMktSessionWithBackend(
+      buildMktCookieHeader({ accessToken: accessCookie, sessionToken: sessionCookie }),
+      nextAuthUserId,
+    );
+    if (!backendSession.ok) {
+      hasValidAccess = false;
+      clearStaleAuthCookies = true;
+    }
+  }
+
+  let refreshedSetCookies: string[] = [];
+  let refreshedOk = false;
+
+  if (
+    hasNextAuthCustomer &&
+    !hasValidAccess &&
+    isValidMktRefreshCookie(refreshCookie, nextAuthUserId, sessionCookie)
+  ) {
+    const refreshResult = await refreshMktSessionFromBackend(request.headers.get('cookie') || '');
+    if (refreshResult.ok) {
+      refreshedOk = true;
+      clearStaleAuthCookies = false;
+      refreshedSetCookies = refreshResult.setCookies;
+    } else if (refreshResult.revoked) {
+      clearStaleAuthCookies = true;
+      refreshedSetCookies = refreshResult.setCookies;
+    }
+  }
+
+  // Exchange single-use Google OAuth handoff code into HttpOnly cookies if user lands directly on a protected route
+  if (
+    hasNextAuthCustomer &&
+    !hasValidAccess &&
+    !refreshedOk &&
+    !request.headers.has('next-router-prefetch') &&
+    typeof token?.oauthExchangeCode === 'string' &&
+    token.oauthExchangeCode
+  ) {
+    const exchangeResult = await exchangeMktOAuthCodeFromBackend(token.oauthExchangeCode);
+    if (exchangeResult.ok && exchangeResult.setCookies.length > 0) {
+      refreshedOk = true;
+      clearStaleAuthCookies = false;
+      refreshedSetCookies = exchangeResult.setCookies;
+    }
+  }
+
+  const isAuthenticated = hasNextAuthCustomer && (hasValidAccess || refreshedOk);
+
+  // Redirect already-authenticated customers away from /login or /register
+  if (isAuthenticated && (isAuthEntryPage || isVerifyWithoutCode)) {
+    const targetPath = sanitizeMktCallbackUrl(
+      request.nextUrl.searchParams.get('callbackUrl'),
+      '/',
+    );
+    return applyResponseHeaders(
+      NextResponse.redirect(new URL(targetPath, request.url)),
+      refreshedSetCookies,
+    );
+  }
+
+  // 5. Block unauthenticated or tokenless requests to customer-private routes & APIs
+  if (isProtectedRoute && !isAuthenticated) {
+    if (
+      Boolean(accessCookie) ||
+      Boolean(refreshCookie) ||
+      Boolean(sessionCookie) ||
+      request.cookies.has('next-auth.session-token') ||
+      request.cookies.has('__Secure-next-auth.session-token')
+    ) {
+      clearStaleAuthCookies = true;
+    }
     if (pathname.startsWith('/api/')) {
-      return NextResponse.json(
-        {
-          success: false,
-          error: 'Unauthorized: Valid customer session token or JWT required at edge routing layer.',
-          code: 'EDGE_AUTH_REQUIRED',
-        },
-        {
-          status: 401,
-          headers: {
-            'Content-Security-Policy': cspHeader,
-            'x-nonce': nonce,
+      return applyResponseHeaders(
+        NextResponse.json(
+          {
+            success: false,
+            error: 'Unauthorized: Customer login and valid HttpOnly access token required.',
+            code: 'EDGE_AUTH_REQUIRED',
           },
-        }
+          { status: 401 },
+        ),
+        refreshedSetCookies,
       );
     }
 
     const loginUrl = new URL('/login', request.url);
-    loginUrl.searchParams.set('callbackUrl', pathname);
-    return NextResponse.redirect(loginUrl);
+    const requestedPath = `${pathname}${request.nextUrl.search || ''}`;
+    loginUrl.searchParams.set('callbackUrl', requestedPath);
+    return applyResponseHeaders(NextResponse.redirect(loginUrl), refreshedSetCookies);
   }
 
-  // 4. Prepare Verified Downstream Request Headers with Injected Nonce
+  // 6. Propagate merged refreshed HttpOnly cookies & cryptographic nonce downstream
   const requestHeaders = new Headers(request.headers);
+  if (refreshedSetCookies.length > 0) {
+    requestHeaders.set(
+      'cookie',
+      buildMergedCookieHeader(request.headers.get('cookie'), refreshedSetCookies),
+    );
+    requestHeaders.set('x-auth-edge-refreshed', '1');
+  }
   requestHeaders.set('x-nonce', nonce);
   requestHeaders.set('Content-Security-Policy', cspHeader);
   requestHeaders.set('x-edge-routed', 'true');
   requestHeaders.set('x-edge-runtime', 'vercel-edge-v8');
 
-  if (token) {
-    requestHeaders.set('x-auth-user-id', (token.id as string) || (token.sub as string) || '');
+  if (isAuthenticated && token) {
+    requestHeaders.set('x-auth-user-id', nextAuthUserId);
     requestHeaders.set('x-auth-user-email', token.email || '');
     requestHeaders.set('x-auth-user-role', (token.role as string) || 'CUSTOMER');
     requestHeaders.set('x-auth-verified-edge', 'true');
@@ -215,29 +404,5 @@ export async function middleware(request: NextRequest) {
     },
   });
 
-  // Attach Security & Telemetry Headers to HTTP Response
-  response.headers.set('Content-Security-Policy', cspHeader);
-  response.headers.set('x-nonce', nonce);
-  response.headers.set('x-content-type-options', 'nosniff');
-  response.headers.set('x-frame-options', 'DENY');
-  response.headers.set('x-xss-protection', '1; mode=block');
-
-  // Propagate geo-location info
-  const geoCountry = request.geo?.country || request.headers.get('x-vercel-ip-country') || 'US';
-  const geoCity = request.geo?.city || request.headers.get('x-vercel-ip-city') || 'Edge';
-  response.headers.set('x-edge-geo', `${geoCity}, ${geoCountry}`);
-  response.headers.set('x-edge-runtime', 'vercel-edge-v8');
-
-  // Rate Limiting headers
-  response.headers.set('X-RateLimit-Limit', String(rateLimit.limit));
-  response.headers.set('X-RateLimit-Remaining', String(rateLimit.remaining));
-  response.headers.set('X-RateLimit-Reset', String(rateLimit.reset));
-
-  // Strict CORS headers for allowed origins
-  if (origin && isOriginAllowed(origin)) {
-    response.headers.set('Access-Control-Allow-Origin', origin);
-    response.headers.set('Access-Control-Allow-Credentials', 'true');
-  }
-
-  return response;
+  return applyResponseHeaders(response, refreshedSetCookies);
 }

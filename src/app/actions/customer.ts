@@ -1,19 +1,22 @@
 'use server';
 
 import { getTaintedCustomerRecord, sanitizeCustomerToDTO, PublicCustomerDTO } from '@/lib/server-user';
+import { requireCustomerServerAction } from '@/lib/server-auth';
 
 /**
  * Server Action: Safely retrieve authenticated customer profile.
  * Even if an engineer mistakenly tries to return the raw tainted object,
  * React's experimental taint system blocks it from reaching the client!
  */
-export async function fetchCustomerProfile(customerId: string = 'cust_sarah_01'): Promise<{
+export async function fetchCustomerProfile(customerId?: string): Promise<{
   success: boolean;
   profile?: PublicCustomerDTO;
   error?: string;
 }> {
   try {
-    const rawTaintedCustomer = await getTaintedCustomerRecord(customerId);
+    const session = await requireCustomerServerAction();
+    const targetCustomerId = customerId && customerId === session.userId ? customerId : session.userId;
+    const rawTaintedCustomer = await getTaintedCustomerRecord(targetCustomerId);
 
     // Secure DTO Sanitization: Strips passwordHash, stripeCustomerId, twoFactorSecret
     const publicProfile = sanitizeCustomerToDTO(rawTaintedCustomer);

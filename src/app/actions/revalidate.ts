@@ -1,6 +1,7 @@
 'use server';
 
 import { revalidateTag, revalidatePath } from 'next/cache';
+import { requireCustomerServerAction } from '@/lib/server-auth';
 
 /**
  * Server Action for Server-Driven Data Cache Invalidation
@@ -8,6 +9,7 @@ import { revalidateTag, revalidatePath } from 'next/cache';
  */
 export async function revalidateCatalogTag(tag: string = 'catalog-products') {
   try {
+    await requireCustomerServerAction();
     revalidateTag(tag);
     revalidatePath('/');
     return {

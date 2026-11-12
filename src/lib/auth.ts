@@ -5,6 +5,7 @@ import GitHubProvider from 'next-auth/providers/github';
 
 const BACKEND_API_URL =
   process.env.NEXT_PUBLIC_BACKEND_API_URL || 'http://localhost:4000';
+const useSecureNextAuthCookies = Boolean(process.env.NEXTAUTH_URL?.startsWith('https://'));
 
 function readCookieHeader(req: any): string | undefined {
   const headers = req?.headers;
@@ -135,6 +136,20 @@ export const authOptions: NextAuthOptions = {
   session: {
     strategy: 'jwt',
     maxAge: 30 * 24 * 60 * 60 // 30 days
+  },
+  useSecureCookies: useSecureNextAuthCookies,
+  cookies: {
+    sessionToken: {
+      name: useSecureNextAuthCookies
+        ? '__Secure-next-auth.session-token'
+        : 'next-auth.session-token',
+      options: {
+        httpOnly: true,
+        sameSite: 'lax',
+        path: '/',
+        secure: useSecureNextAuthCookies,
+      },
+    },
   },
   callbacks: {
     async signIn({ user, account }) {

@@ -10,6 +10,10 @@ export async function logoutMarketplace(options: { callbackUrl?: string; redirec
     // Still proceed to clear NextAuth cookie even if backend is temporarily unreachable
   }
 
+  if (typeof window !== 'undefined' && localStorage.getItem('marketplace_token')) {
+    localStorage.removeItem('marketplace_token');
+  }
+
   if (options.redirect === false) {
     await signOut({ redirect: false });
     return;

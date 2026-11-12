@@ -39,6 +39,7 @@ function SessionTokenSync() {
         if (handoff.status === 401) {
           const data = await handoff.json().catch(() => ({}));
           if (data?.needsReauth) {
+            await marketplaceApi.auth.logout().catch(() => {});
             await signOut({ redirect: false });
           }
         }

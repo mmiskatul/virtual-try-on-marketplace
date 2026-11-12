@@ -31,11 +31,15 @@ export async function POST(request: NextRequest) {
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 15000);
 
+      const incomingCookie = request.headers.get('cookie');
       // Route through backend: triggers AI generation and automatic Cloudinary upload
       const backendResponse = await fetch(`${backendUrl}/api/v1/try-on/direct`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'X-Auth-Portal': 'marketplace',
+          'X-Auth-Transport': 'cookie',
+          ...(incomingCookie ? { Cookie: incomingCookie } : {}),
           'x-edge-client-ip': request.headers.get('x-forwarded-for') || '',
         },
         body: JSON.stringify({
