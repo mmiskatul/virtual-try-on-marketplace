@@ -3,7 +3,24 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { SessionProvider, signOut, useSession } from 'next-auth/react';
+import { Provider } from 'react-redux';
 import { marketplaceApi } from '@/lib/api';
+import { store } from '@/store';
+import { cartActions } from '@/store/slices/cartSlice';
+import { customerActions } from '@/store/slices/customerSlice';
+import {
+  readPersistedCartState,
+  readPersistedCustomerState,
+} from '@/store/middleware/persistence';
+
+function ReduxMarketplaceHydrator() {
+  useEffect(() => {
+    store.dispatch(cartActions.hydrateCart(readPersistedCartState()));
+    store.dispatch(customerActions.hydrateCustomer(readPersistedCustomerState()));
+  }, []);
+
+  return null;
+}
 
 function SessionTokenSync() {
   const { data: session, status } = useSession();
@@ -72,9 +89,12 @@ export function QueryProvider({ children }: { children: React.ReactNode }) {
   );
 
   return (
-    <SessionProvider>
-      <SessionTokenSync />
-      <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
-    </SessionProvider>
+    <Provider store={store}>
+      <ReduxMarketplaceHydrator />
+      <SessionProvider>
+        <SessionTokenSync />
+        <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
+      </SessionProvider>
+    </Provider>
   );
 }

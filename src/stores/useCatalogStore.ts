@@ -1,6 +1,8 @@
-import { create } from 'zustand';
 import { MarketplaceProduct, BrandPartner } from '../types';
-import { INITIAL_PRODUCTS, INITIAL_BRANDS } from '../lib/mock_data';
+import { store } from '../store';
+import { createSliceFacadeHook } from '../store/hooks';
+import { selectCatalogState } from '../store/selectors';
+import { catalogActions } from '../store/slices/catalogSlice';
 
 export interface CatalogStore {
   products: MarketplaceProduct[];
@@ -11,7 +13,6 @@ export interface CatalogStore {
   tryOnOnly: boolean;
   sortBy: 'newest' | 'price-asc' | 'price-desc';
 
-  // Actions
   setProducts: (products: MarketplaceProduct[]) => void;
   setSearchQuery: (query: string) => void;
   setSelectedCategory: (category: string) => void;
@@ -22,28 +23,31 @@ export interface CatalogStore {
   resetFilters: () => void;
 }
 
-export const useCatalogStore = create<CatalogStore>((set) => ({
-  products: INITIAL_PRODUCTS,
-  brands: INITIAL_BRANDS,
-  searchQuery: '',
-  selectedCategory: 'All',
-  selectedBrand: 'All',
-  tryOnOnly: false,
-  sortBy: 'newest',
+const catalogBoundActions = {
+  setProducts: (products: MarketplaceProduct[]) => {
+    store.dispatch(catalogActions.setProducts(products));
+  },
+  setSearchQuery: (query: string) => {
+    store.dispatch(catalogActions.setSearchQuery(query));
+  },
+  setSelectedCategory: (category: string) => {
+    store.dispatch(catalogActions.setSelectedCategory(category));
+  },
+  setSelectedBrand: (brand: string) => {
+    store.dispatch(catalogActions.setSelectedBrand(brand));
+  },
+  toggleTryOnOnly: () => {
+    store.dispatch(catalogActions.toggleTryOnOnly());
+  },
+  setTryOnOnly: (val: boolean) => {
+    store.dispatch(catalogActions.setTryOnOnly(val));
+  },
+  setSortBy: (sort: 'newest' | 'price-asc' | 'price-desc') => {
+    store.dispatch(catalogActions.setSortBy(sort));
+  },
+  resetFilters: () => {
+    store.dispatch(catalogActions.resetFilters());
+  },
+};
 
-  setProducts: (products) => set({ products }),
-  setSearchQuery: (searchQuery) => set({ searchQuery }),
-  setSelectedCategory: (selectedCategory) => set({ selectedCategory }),
-  setSelectedBrand: (selectedBrand) => set({ selectedBrand }),
-  toggleTryOnOnly: () => set((state) => ({ tryOnOnly: !state.tryOnOnly })),
-  setTryOnOnly: (tryOnOnly) => set({ tryOnOnly }),
-  setSortBy: (sortBy) => set({ sortBy }),
-  resetFilters: () =>
-    set({
-      searchQuery: '',
-      selectedCategory: 'All',
-      selectedBrand: 'All',
-      tryOnOnly: false,
-      sortBy: 'newest'
-    })
-}));
+export const useCatalogStore = createSliceFacadeHook(selectCatalogState, catalogBoundActions);

@@ -1,5 +1,8 @@
-import { create } from 'zustand';
 import { MarketplaceProduct } from '../types';
+import { store } from '../store';
+import { createSliceFacadeHook } from '../store/hooks';
+import { selectTryOnState } from '../store/selectors';
+import { tryOnActions } from '../store/slices/tryOnSlice';
 
 export interface TryOnStore {
   activeProduct: MarketplaceProduct | null;
@@ -20,32 +23,31 @@ export interface TryOnStore {
   closeTryOn: () => void;
 }
 
-export const useTryOnStore = create<TryOnStore>((set) => ({
-  activeProduct: null,
-  scopedBrandSlug: null,
-  phase: 'upload',
-  userUploadedPhoto: null,
-  resultImageUrl: '',
-  selectedSize: 'M',
-  selectedColor: 'Classic',
-  resultMode: 'demo_preview',
-  notice: null,
+const tryOnBoundActions = {
+  startTryOn: (product: MarketplaceProduct, options?: { scopedBrandSlug?: string }) => {
+    store.dispatch(
+      tryOnActions.startTryOn({ product, scopedBrandSlug: options?.scopedBrandSlug })
+    );
+  },
+  setTryOnPhase: (phase: 'upload' | 'processing' | 'result' | 'error') => {
+    store.dispatch(tryOnActions.setTryOnPhase(phase));
+  },
+  setUserUploadedPhoto: (photo: string | null) => {
+    store.dispatch(tryOnActions.setUserUploadedPhoto(photo));
+  },
+  setResultImageUrl: (
+    url: string,
+    mode: 'live_ai' | 'demo_preview' = 'demo_preview',
+    notice: string | null = null
+  ) => {
+    store.dispatch(tryOnActions.setResultImageUrl({ url, mode, notice }));
+  },
+  setVariantChoice: (size: string, color: string) => {
+    store.dispatch(tryOnActions.setVariantChoice({ size, color }));
+  },
+  closeTryOn: () => {
+    store.dispatch(tryOnActions.closeTryOn());
+  },
+};
 
-  startTryOn: (product, options) =>
-    set({
-      activeProduct: product,
-      scopedBrandSlug: options?.scopedBrandSlug || null,
-      phase: 'upload',
-      selectedSize: product.sizes?.[0] || 'M',
-      selectedColor: product.colors?.[0]?.name || 'Classic',
-      resultImageUrl: product.image,
-      notice: null,
-    }),
-
-  setTryOnPhase: (phase) => set({ phase }),
-  setUserUploadedPhoto: (userUploadedPhoto) => set({ userUploadedPhoto }),
-  setResultImageUrl: (resultImageUrl, resultMode = 'demo_preview', notice = null) =>
-    set({ resultImageUrl, resultMode, notice }),
-  setVariantChoice: (selectedSize, selectedColor) => set({ selectedSize, selectedColor }),
-  closeTryOn: () => set({ activeProduct: null, scopedBrandSlug: null, phase: 'upload', notice: null }),
-}));
+export const useTryOnStore = createSliceFacadeHook(selectTryOnState, tryOnBoundActions);

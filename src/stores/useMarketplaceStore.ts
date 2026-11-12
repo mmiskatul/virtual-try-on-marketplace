@@ -1,5 +1,3 @@
-import { create } from 'zustand';
-import { createJSONStorage, persist } from 'zustand/middleware';
 import {
   AppNotification,
   CustomerOrder,
@@ -8,43 +6,12 @@ import {
   SavedAddress,
   TryOnResultRecord,
 } from '../types';
+import { store } from '../store';
+import { createSliceFacadeHook } from '../store/hooks';
+import { selectCustomerState } from '../store/selectors';
+import { customerActions, SavedCustomerPhoto } from '../store/slices/customerSlice';
 
-export interface SavedCustomerPhoto {
-  id: string;
-  url: string;
-  label: string;
-  createdAt: string;
-}
-
-const INITIAL_NOTIFICATIONS: AppNotification[] = [
-  {
-    id: 'notif_1',
-    type: 'collection',
-    title: 'Eid Heritage Collection Live',
-    message: 'Dhaka Loom House and Noor & Zari added handwoven muslin Panjabis and Jamdani sarees.',
-    href: '/collections?collection=eid-collection',
-    read: false,
-    createdAt: '2026-11-11T09:00:00.000Z',
-  },
-  {
-    id: 'notif_2',
-    type: 'discount',
-    title: '10% Welcome Code Active: VTRY10',
-    message: 'Apply code VTRY10 at checkout across participating brands or enjoy free shipping over ৳1,500.',
-    href: '/discover?onSale=true',
-    read: false,
-    createdAt: '2026-11-10T22:00:00.000Z',
-  },
-  {
-    id: 'notif_3',
-    type: 'brand',
-    title: 'Aura Atelier Added Boutique Exclusives',
-    message: 'Explore studio-only cashmere outerwear exclusively on the Aura Atelier storefront.',
-    href: '/brands/aura-atelier',
-    read: true,
-    createdAt: '2026-11-09T12:00:00.000Z',
-  },
-];
+export type { SavedCustomerPhoto };
 
 export interface MarketplaceCustomerStore {
   wishlistIds: string[];
@@ -94,195 +61,95 @@ export interface MarketplaceCustomerStore {
   dismissAnnouncement: () => void;
 }
 
-export const useMarketplaceStore = create<MarketplaceCustomerStore>()(
-  persist(
-    (set, get) => ({
-      wishlistIds: ['prod_aura_dress_01', 'prod_dlh_panjabi_01'],
-      followedBrandSlugs: ['aura-atelier', 'dhaka-loom-house'],
-      savedPhotos: [],
-      tryOnHistory: [],
-      orders: [],
-      addresses: [
-        {
-          id: 'addr_default_1',
-          label: 'Home',
-          fullName: 'Nadia Rahman',
-          phone: '+880 1711-000000',
-          email: 'customer@example.com',
-          street: 'House 24, Road 11, Banani',
-          city: 'Dhaka',
-          state: 'Dhaka',
-          postalCode: '1213',
-          country: 'Bangladesh',
-          isDefault: true,
-        },
-      ],
-      customReviews: [],
-      notifications: INITIAL_NOTIFICATIONS,
-      recentSearches: ['Silk Dress', 'Panjabi', 'Blazer'],
-      preferences: {
-        orderUpdates: true,
-        brandDrops: true,
-        tryOnAlerts: true,
-        promoOffers: true,
-        photoConsentGranted: false,
-        autoDeletePhotosDays: 30,
-      },
-      announcementDismissed: false,
+const customerBoundActions = {
+  toggleWishlist: (productId: string) => {
+    store.dispatch(customerActions.toggleWishlist(productId));
+  },
+  isWishlisted: (productId: string) =>
+    store.getState().customer.wishlistIds.includes(productId),
+  toggleFollowBrand: (brandSlug: string) => {
+    store.dispatch(customerActions.toggleFollowBrand(brandSlug));
+  },
+  isFollowingBrand: (brandSlug: string) =>
+    store.getState().customer.followedBrandSlugs.includes(brandSlug),
 
-      toggleWishlist: (productId) =>
-        set((state) => {
-          const exists = state.wishlistIds.includes(productId);
-          return {
-            wishlistIds: exists
-              ? state.wishlistIds.filter((id) => id !== productId)
-              : [productId, ...state.wishlistIds],
-          };
-        }),
+  addSavedPhoto: ({ url, label }: { url: string; label?: string }): SavedCustomerPhoto => {
+    const record: SavedCustomerPhoto = {
+      id: `photo_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`,
+      url,
+      label: label || `Saved Photo ${store.getState().customer.savedPhotos.length + 1}`,
+      createdAt: new Date().toISOString(),
+    };
+    store.dispatch(customerActions.addSavedPhotoRecord(record));
+    return record;
+  },
+  deleteSavedPhoto: (id: string) => {
+    store.dispatch(customerActions.deleteSavedPhoto(id));
+  },
+  clearAllSavedPhotos: () => {
+    store.dispatch(customerActions.clearAllSavedPhotos());
+  },
 
-      isWishlisted: (productId) => get().wishlistIds.includes(productId),
+  addTryOnRecord: (record: TryOnResultRecord) => {
+    store.dispatch(customerActions.addTryOnRecord(record));
+  },
+  deleteTryOnRecord: (id: string) => {
+    store.dispatch(customerActions.deleteTryOnRecord(id));
+  },
+  clearTryOnHistory: () => {
+    store.dispatch(customerActions.clearTryOnHistory());
+  },
 
-      toggleFollowBrand: (brandSlug) =>
-        set((state) => {
-          const exists = state.followedBrandSlugs.includes(brandSlug);
-          return {
-            followedBrandSlugs: exists
-              ? state.followedBrandSlugs.filter((s) => s !== brandSlug)
-              : [brandSlug, ...state.followedBrandSlugs],
-          };
-        }),
+  addOrder: (order: CustomerOrder) => {
+    store.dispatch(customerActions.addOrder(order));
+  },
+  cancelOrder: (orderId: string) => {
+    store.dispatch(customerActions.cancelOrder(orderId));
+  },
+  requestReturnOrder: (orderId: string) => {
+    store.dispatch(customerActions.requestReturnOrder(orderId));
+  },
 
-      isFollowingBrand: (brandSlug) => get().followedBrandSlugs.includes(brandSlug),
+  addAddress: (addr: Omit<SavedAddress, 'id'>) => {
+    store.dispatch(customerActions.addAddress(addr));
+  },
+  removeAddress: (id: string) => {
+    store.dispatch(customerActions.removeAddress(id));
+  },
+  setDefaultAddress: (id: string) => {
+    store.dispatch(customerActions.setDefaultAddress(id));
+  },
 
-      addSavedPhoto: ({ url, label }) => {
-        const record: SavedCustomerPhoto = {
-          id: `photo_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`,
-          url,
-          label: label || `Saved Photo ${get().savedPhotos.length + 1}`,
-          createdAt: new Date().toISOString(),
-        };
-        set((state) => ({
-          savedPhotos: [record, ...state.savedPhotos.filter((p) => p.url !== url)].slice(0, 8),
-        }));
-        return record;
-      },
+  addReview: (review: ProductReview) => {
+    store.dispatch(customerActions.addReview(review));
+  },
 
-      deleteSavedPhoto: (id) =>
-        set((state) => ({
-          savedPhotos: state.savedPhotos.filter((p) => p.id !== id),
-        })),
+  markNotificationRead: (id: string) => {
+    store.dispatch(customerActions.markNotificationRead(id));
+  },
+  markAllNotificationsRead: () => {
+    store.dispatch(customerActions.markAllNotificationsRead());
+  },
+  clearNotifications: () => {
+    store.dispatch(customerActions.clearNotifications());
+  },
+  pushNotification: (n: Omit<AppNotification, 'id' | 'read' | 'createdAt'>) => {
+    store.dispatch(customerActions.pushNotification(n));
+  },
 
-      clearAllSavedPhotos: () => set({ savedPhotos: [] }),
+  addRecentSearch: (q: string) => {
+    store.dispatch(customerActions.addRecentSearch(q));
+  },
+  clearRecentSearches: () => {
+    store.dispatch(customerActions.clearRecentSearches());
+  },
 
-      addTryOnRecord: (record) =>
-        set((state) => ({
-          tryOnHistory: [record, ...state.tryOnHistory].slice(0, 30),
-        })),
+  updatePreferences: (partial: Partial<CustomerPreferences>) => {
+    store.dispatch(customerActions.updatePreferences(partial));
+  },
+  dismissAnnouncement: () => {
+    store.dispatch(customerActions.dismissAnnouncement());
+  },
+};
 
-      deleteTryOnRecord: (id) =>
-        set((state) => ({
-          tryOnHistory: state.tryOnHistory.filter((r) => r.id !== id),
-        })),
-
-      clearTryOnHistory: () => set({ tryOnHistory: [] }),
-
-      addOrder: (order) =>
-        set((state) => ({
-          orders: [order, ...state.orders],
-        })),
-
-      cancelOrder: (orderId) =>
-        set((state) => ({
-          orders: state.orders.map((o) =>
-            o.id === orderId && o.status === 'PROCESSING' ? { ...o, status: 'CANCELLED' } : o
-          ),
-        })),
-
-      requestReturnOrder: (orderId) =>
-        set((state) => ({
-          orders: state.orders.map((o) =>
-            o.id === orderId && o.status === 'DELIVERED'
-              ? { ...o, status: 'RETURN_REQUESTED' }
-              : o
-          ),
-        })),
-
-      addAddress: (addr) =>
-        set((state) => {
-          const id = `addr_${Date.now()}`;
-          const nextAddresses = addr.isDefault
-            ? state.addresses.map((a) => ({ ...a, isDefault: false }))
-            : state.addresses;
-          return {
-            addresses: [{ ...addr, id }, ...nextAddresses],
-          };
-        }),
-
-      removeAddress: (id) =>
-        set((state) => ({
-          addresses: state.addresses.filter((a) => a.id !== id),
-        })),
-
-      setDefaultAddress: (id) =>
-        set((state) => ({
-          addresses: state.addresses.map((a) => ({ ...a, isDefault: a.id === id })),
-        })),
-
-      addReview: (review) =>
-        set((state) => ({
-          customReviews: [review, ...state.customReviews],
-        })),
-
-      markNotificationRead: (id) =>
-        set((state) => ({
-          notifications: state.notifications.map((n) => (n.id === id ? { ...n, read: true } : n)),
-        })),
-
-      markAllNotificationsRead: () =>
-        set((state) => ({
-          notifications: state.notifications.map((n) => ({ ...n, read: true })),
-        })),
-
-      clearNotifications: () => set({ notifications: [] }),
-
-      pushNotification: (n) =>
-        set((state) => ({
-          notifications: [
-            {
-              ...n,
-              id: `notif_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`,
-              read: false,
-              createdAt: new Date().toISOString(),
-            },
-            ...state.notifications,
-          ].slice(0, 30),
-        })),
-
-      addRecentSearch: (q) =>
-        set((state) => {
-          const clean = q.trim();
-          if (!clean) return state;
-          return {
-            recentSearches: [
-              clean,
-              ...state.recentSearches.filter((x) => x.toLowerCase() !== clean.toLowerCase()),
-            ].slice(0, 6),
-          };
-        }),
-
-      clearRecentSearches: () => set({ recentSearches: [] }),
-
-      updatePreferences: (partial) =>
-        set((state) => ({
-          preferences: { ...state.preferences, ...partial },
-        })),
-
-      dismissAnnouncement: () => set({ announcementDismissed: true }),
-    }),
-    {
-      name: 'vton_marketplace_customer_state',
-      storage: createJSONStorage(() => localStorage),
-    }
-  )
-);
-
+export const useMarketplaceStore = createSliceFacadeHook(selectCustomerState, customerBoundActions);
