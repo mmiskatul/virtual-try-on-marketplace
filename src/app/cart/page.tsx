@@ -242,7 +242,7 @@ export default function CartPage() {
 
               <p className="text-[11px] text-stone-500 flex items-center gap-1.5">
                 <ShieldCheck className="w-4 h-4 text-emerald-700 shrink-0" />
-                <span>Supports bKash, Nagad, Cards, &amp; Cash on Delivery. Promo code VTRY10 available.</span>
+                <span>Supports bKash, Nagad, Cards, &amp; Cash on Delivery. Have a discount code? Enter it at checkout.</span>
               </p>
             </aside>
           </div>

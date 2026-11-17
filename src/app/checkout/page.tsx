@@ -15,7 +15,7 @@ import {
 } from 'lucide-react';
 import { CustomerOrder, PaymentMethodId } from '../../types';
 import {
-  evaluatePromoCode,
+  validatePromoCode,
   getAvailablePaymentMethods,
   groupCartItemsByBrand,
   submitMultiBrandCheckout,
@@ -65,6 +65,8 @@ export default function CheckoutPage() {
   const [promoInput, setPromoInput] = useState('');
   const [appliedPromo, setAppliedPromo] = useState('');
   const [promoMsg, setPromoMsg] = useState<string | null>(null);
+  const [promoDiscount, setPromoDiscount] = useState(0);
+  const [promoBusy, setPromoBusy] = useState(false);
 
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
@@ -85,8 +87,27 @@ export default function CheckoutPage() {
   const subtotal = groups.reduce((sum, g) => sum + g.subtotal, 0);
   const baseShipping = groups.reduce((sum, g) => sum + g.shippingFee, 0);
   const deliveryUpgradeFee = deliveryMethod === 'same-day' ? 10 : deliveryMethod === 'express' ? 6 : 0;
-  const promoEval = evaluatePromoCode(appliedPromo, subtotal);
-  const discountAmount = promoEval.valid ? promoEval.discountAmount : 0;
+  const discountAmount = appliedPromo ? promoDiscount : 0;
+
+  // Keep the discount honest if the cart changes after a code was applied.
+  useEffect(() => {
+    if (!appliedPromo || !mounted) return;
+    let cancelled = false;
+    void validatePromoCode(appliedPromo, groupCartItemsByBrand(items)).then((r) => {
+      if (cancelled) return;
+      if (r.valid) {
+        setPromoDiscount(r.discountAmount);
+      } else {
+        setAppliedPromo('');
+        setPromoDiscount(0);
+        setPromoMsg(r.message || 'This discount code no longer applies.');
+      }
+    });
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [subtotal]);
   const totalShipping = baseShipping + deliveryUpgradeFee;
   const taxAmount = Number(((subtotal - discountAmount) * 0.05).toFixed(2));
   const grandTotal = Number((subtotal - discountAmount + totalShipping + taxAmount).toFixed(2));
@@ -104,14 +125,19 @@ export default function CheckoutPage() {
     setCountry(found.country);
   };
 
-  const handleApplyPromo = () => {
-    const res = evaluatePromoCode(promoInput, subtotal);
+  const handleApplyPromo = async () => {
+    if (!promoInput.trim()) return;
+    setPromoBusy(true);
+    const res = await validatePromoCode(promoInput, groups);
+    setPromoBusy(false);
     if (res.valid) {
       setAppliedPromo(promoInput.trim().toUpperCase());
-      setPromoMsg(`Applied ${res.label} — Saved ৳${res.discountAmount.toFixed(2)}`);
+      setPromoDiscount(res.discountAmount);
+      setPromoMsg(`Applied ${res.label} \u2014 saved ৳${res.discountAmount.toFixed(2)}`);
     } else {
       setAppliedPromo('');
-      setPromoMsg(res.message || 'Invalid code');
+      setPromoDiscount(0);
+      setPromoMsg(res.message || 'This discount code is not valid.');
     }
   };
 
@@ -651,15 +677,15 @@ export default function CheckoutPage() {
                     type="text"
                     value={promoInput}
                     onChange={(e) => setPromoInput(e.target.value)}
-                    placeholder="Promo code (try VTRY10)"
+                    placeholder="Discount code"
                     className="flex-1 px-3 py-2 rounded-xl border border-stone-200 text-xs"
                   />
-                  <Button type="button" variant="outline" size="sm" onClick={handleApplyPromo}>
-                    Apply
+                  <Button type="button" variant="outline" size="sm" disabled={promoBusy} onClick={() => void handleApplyPromo()}>
+                    {promoBusy ? 'Checking...' : 'Apply'}
                   </Button>
                 </div>
                 {promoMsg && (
-                  <p className={`text-[11px] font-semibold ${promoEval.valid ? 'text-emerald-700' : 'text-rose-600'}`}>
+                  <p className={`text-[11px] font-semibold ${appliedPromo ? 'text-emerald-700' : 'text-rose-600'}`}>
                     {promoMsg}
                   </p>
                 )}

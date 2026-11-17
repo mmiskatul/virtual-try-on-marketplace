@@ -27,12 +27,6 @@ const DEFAULT_ANNOUNCEMENTS: AnnouncementMessage[] = [
     ctaHref: '/discover',
   },
   {
-    id: 'promo_vtry10',
-    text: 'New Customer Offer: Enjoy 10% off your first look with code VTRY10',
-    ctaLabel: 'Shop Sale',
-    ctaHref: '/discover?onSale=true',
-  },
-  {
     id: 'try_on_promo',
     text: 'See It On You Before You Buy — AI Virtual Try-On active on eligible garments',
     ctaLabel: 'Open Studio',

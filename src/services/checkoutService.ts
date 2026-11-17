@@ -40,33 +40,66 @@ export function getAvailablePaymentMethods(): PaymentMethodOption[] {
   return DEFAULT_PAYMENT_METHODS.filter((m) => m.enabled);
 }
 
-export function evaluatePromoCode(code: string, subtotal: number): {
+type PayloadItem = { productId: string; variantSku: string; quantity: number };
+
+function buildPayloadItems(group: BrandCartGroup): PayloadItem[] {
+  return group.items.map((item) => {
+    const matchedVariant =
+      item.product.variants?.find(
+        (v) => v.size === item.size && (!item.color || v.color.toLowerCase() === item.color.toLowerCase())
+      ) || item.product.variants?.[0];
+    return {
+      productId: item.product.id,
+      variantSku: item.variantSku || matchedVariant?.sku || `${item.product.id.toUpperCase()}-M`,
+      quantity: item.quantity,
+    };
+  });
+}
+
+export interface PromoResult {
   valid: boolean;
   discountAmount: number;
+  /** Brands whose items the code applies to. Codes belong to one brand. */
+  acceptedBrandSlugs: string[];
   label?: string;
   message?: string;
-} {
+}
+
+/**
+ * Checks a discount code with the server (the only place that knows real codes).
+ * A code belongs to one brand, so it is tried against each brand's part of the cart.
+ */
+export async function validatePromoCode(code: string, groups: BrandCartGroup[]): Promise<PromoResult> {
   const normalized = code.trim().toUpperCase();
-  if (!normalized) return { valid: false, discountAmount: 0 };
-  if (normalized === 'VTRY10') {
-    return {
-      valid: true,
-      discountAmount: Number((subtotal * 0.1).toFixed(2)),
-      label: 'VTRY10 (10% Off)',
-    };
+  if (!normalized) return { valid: false, discountAmount: 0, acceptedBrandSlugs: [] };
+
+  const { marketplaceFetch } = await import('@/lib/api');
+  let discountAmount = 0;
+  const accepted: string[] = [];
+  let firstMessage = '';
+
+  for (const group of groups) {
+    try {
+      const res = await marketplaceFetch(`${API_BASE}/api/v1/checkout/validate`, {
+        method: 'POST',
+        body: JSON.stringify({ items: buildPayloadItems(group), couponCode: normalized }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (res.ok && data?.discountAmount > 0) {
+        discountAmount += Number(data.discountAmount);
+        accepted.push(group.brandSlug);
+      } else if (!firstMessage && data?.message) {
+        firstMessage = data.message;
+      }
+    } catch {
+      return { valid: false, discountAmount: 0, acceptedBrandSlugs: [], message: 'Could not check the code right now. Please try again.' };
+    }
   }
-  if (normalized === 'WELCOME15') {
-    return {
-      valid: true,
-      discountAmount: Number((subtotal * 0.15).toFixed(2)),
-      label: 'WELCOME15 (15% Off)',
-    };
+
+  if (accepted.length === 0) {
+    return { valid: false, discountAmount: 0, acceptedBrandSlugs: [], message: firstMessage || 'This discount code is not valid.' };
   }
-  return {
-    valid: false,
-    discountAmount: 0,
-    message: 'Promo code not recognized. Try VTRY10 or WELCOME15.',
-  };
+  return { valid: true, discountAmount: Number(discountAmount.toFixed(2)), acceptedBrandSlugs: accepted, label: normalized };
 }
 
 /**
@@ -99,7 +132,9 @@ export async function submitMultiBrandCheckout(params: {
     params.deliveryMethod === 'same-day' ? 10 : params.deliveryMethod === 'express' ? 6 : 0;
 
   const subtotal = groups.reduce((sum, g) => sum + g.subtotal, 0);
-  const promo = params.promoCode ? evaluatePromoCode(params.promoCode, subtotal) : { valid: false, discountAmount: 0 };
+  const promo: PromoResult = params.promoCode
+    ? await validatePromoCode(params.promoCode, groups)
+    : { valid: false, discountAmount: 0, acceptedBrandSlugs: [] };
   const baseShipping = groups.reduce((sum, g) => sum + g.shippingFee, 0);
   const totalShipping = Number((baseShipping + deliveryMultiplier).toFixed(2));
   const taxAmount = Number(((subtotal - promo.discountAmount) * 0.05).toFixed(2));
@@ -109,17 +144,7 @@ export async function submitMultiBrandCheckout(params: {
   const confirmedGroups: CustomerOrder['groups'] = [];
 
   for (const group of groups) {
-    const payloadItems = group.items.map((item) => {
-      const matchedVariant = item.product.variants?.find(
-        (v) => v.size === item.size && (!item.color || v.color.toLowerCase() === item.color.toLowerCase())
-      ) || item.product.variants?.[0];
-
-      return {
-        productId: item.product.id,
-        variantSku: item.variantSku || matchedVariant?.sku || `${item.product.id.toUpperCase()}-M`,
-        quantity: item.quantity,
-      };
-    });
+    const payloadItems = buildPayloadItems(group);
 
     let groupOrderRef = `ORD-${group.brandSlug.toUpperCase().slice(0, 4)}-${Math.floor(1000 + Math.random() * 9000)}`;
 
@@ -131,6 +156,7 @@ export async function submitMultiBrandCheckout(params: {
         method: 'POST',
         body: JSON.stringify({
           items: payloadItems,
+          couponCode: promo.valid && promo.acceptedBrandSlugs.includes(group.brandSlug) ? params.promoCode : undefined,
           customerEmail: params.customerEmail,
           shippingAddress: {
             fullName: params.shippingAddress.fullName,
