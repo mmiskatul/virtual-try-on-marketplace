@@ -91,7 +91,7 @@ export function QueryProvider({ children }: { children: React.ReactNode }) {
   return (
     <Provider store={store}>
       <ReduxMarketplaceHydrator />
-      <SessionProvider>
+      <SessionProvider refetchOnWindowFocus={false}>
         <SessionTokenSync />
         <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
       </SessionProvider>

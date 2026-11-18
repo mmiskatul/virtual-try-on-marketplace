@@ -10,7 +10,10 @@ import { trace } from '@opentelemetry/api';
  */
 export async function POST(request: NextRequest) {
   try {
-    const vital = await request.json();
+    const body = await request.json();
+    // Accept one metric or a batch ({ metrics: [...] }); cap the batch size.
+    const vitals: any[] = (Array.isArray(body?.metrics) ? body.metrics : [body]).slice(0, 20);
+    for (const vital of vitals) {
 
     const tracer = trace.getTracer('vton-rum-collector');
     const span = tracer.startSpan(`RUM_${vital.name || 'Metric'}`);
@@ -34,11 +37,11 @@ export async function POST(request: NextRequest) {
     span.setAttribute('newrelic.web_vital', vital.name);
 
     span.end();
+    }
 
     return NextResponse.json({
       success: true,
-      ingested: vital.name,
-      rating: vital.rating,
+      ingested: vitals.length,
       timestamp: Date.now(),
     });
   } catch {
