@@ -12,7 +12,7 @@ export interface CatalogResponse {
  * Uses Next.js native fetch cache with granular cache tags ('catalog-products', 'marketplace-brands').
  */
 export async function getServerCatalogData(): Promise<CatalogResponse> {
-  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000';
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || (process.env.NODE_ENV === 'production' ? 'https://vtrystudio.com' : 'http://localhost:3000');
 
   try {
     const res = await fetch(`${siteUrl}/api/edge/catalog`, {
