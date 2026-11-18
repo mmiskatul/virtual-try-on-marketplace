@@ -1,7 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-export const runtime = 'edge';
-export const preferredRegion = 'auto';
 
 /**
  * Edge Runtime Data Routing Handler: AI Try-On Job Dispatch
@@ -82,7 +80,7 @@ export async function POST(request: NextRequest) {
       {
         status: 200,
         headers: {
-          'x-edge-runtime': 'vercel-edge-v8',
+          'x-edge-runtime': 'cloudflare-workers',
           'server-timing': `edge-dispatch;dur=${durationMs}`,
         },
       }

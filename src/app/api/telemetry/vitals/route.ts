@@ -2,7 +2,6 @@ import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 import { trace } from '@opentelemetry/api';
 
-export const runtime = 'edge';
 
 /**
  * Real User Monitoring (RUM) Telemetry Ingestion Endpoint

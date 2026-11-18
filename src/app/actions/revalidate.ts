@@ -10,7 +10,7 @@ import { requireCustomerServerAction } from '@/lib/server-auth';
 export async function revalidateCatalogTag(tag: string = 'catalog-products') {
   try {
     await requireCustomerServerAction();
-    revalidateTag(tag);
+    revalidateTag(tag, 'max');
     revalidatePath('/');
     return {
       success: true,

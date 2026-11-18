@@ -153,7 +153,7 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(new URL('/forgot-password', request.url));
   }
   const origin = request.headers.get('origin');
-  const clientIp = request.ip || request.headers.get('x-forwarded-for')?.split(',')[0].trim() || '127.0.0.1';
+  const clientIp = request.headers.get('cf-connecting-ip') || request.headers.get('x-forwarded-for')?.split(',')[0].trim() || '127.0.0.1';
 
   // 1. Edge-Level Strict CORS Preflight & Origin Verification
   if (pathname.startsWith('/api/')) {
@@ -206,8 +206,8 @@ export async function middleware(request: NextRequest) {
   // 3. Generate Cryptographic Nonce & Shared Response Header Helper
   const nonce = btoa(crypto.randomUUID());
   const cspHeader = createContentSecurityPolicy(nonce);
-  const geoCountry = request.geo?.country || request.headers.get('x-vercel-ip-country') || 'US';
-  const geoCity = request.geo?.city || request.headers.get('x-vercel-ip-city') || 'Edge';
+  const geoCountry = request.headers.get('cf-ipcountry') || request.headers.get('x-vercel-ip-country') || 'US';
+  const geoCity = request.headers.get('cf-ipcity') || request.headers.get('x-vercel-ip-city') || 'Edge';
   let clearStaleAuthCookies = false;
 
   const applyResponseHeaders = (

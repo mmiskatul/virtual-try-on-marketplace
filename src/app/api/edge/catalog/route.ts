@@ -1,12 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { INITIAL_PRODUCTS, INITIAL_BRANDS } from '../../../../lib/mock_data';
 
-export const runtime = 'edge';
-export const preferredRegion = 'auto';
 
 /**
  * Edge Runtime Data Fetching Handler: Catalog Feed
- * Deployed on the Vercel Edge Network close to the user to minimize TTFB.
+ * Runs on Cloudflare Workers close to the user to minimize TTFB.
  */
 export async function GET(request: NextRequest) {
   const startTime = Date.now();
@@ -78,7 +76,7 @@ export async function GET(request: NextRequest) {
         total: products.length,
       },
       edge: {
-        runtime: 'Vercel Edge Network (V8 Isolate)',
+        runtime: 'Cloudflare Workers',
         durationMs,
         region: process.env.VERCEL_REGION || 'edge-auto',
       },
@@ -90,7 +88,7 @@ export async function GET(request: NextRequest) {
         'Cache-Control': 'public, s-maxage=60, stale-while-revalidate=300',
         'CDN-Cache-Control': 'max-age=60',
         'Vary': 'Accept-Encoding',
-        'x-edge-runtime': 'vercel-edge-v8',
+        'x-edge-runtime': 'cloudflare-workers',
         'server-timing': `edge-ttfb;dur=${durationMs}`,
       },
     }

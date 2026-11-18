@@ -33,7 +33,7 @@ export async function getVerifiedCustomerSession(): Promise<VerifiedCustomerSess
     return null;
   }
 
-  const cookieStore = cookies();
+  const cookieStore = await cookies();
   const accessToken = cookieStore.get(MKT_ACCESS_COOKIE)?.value;
   const refreshToken = cookieStore.get(MKT_REFRESH_COOKIE)?.value;
   const sessionCookie = cookieStore.get(MKT_SESSION_COOKIE)?.value;
