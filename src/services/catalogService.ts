@@ -139,8 +139,10 @@ export function normalizeBackendProduct(raw: any): MarketplaceProduct {
     fitNotes: matchedSeed?.fitNotes,
     // Keys starting with "_" are internal (e.g. the AI reference image) and never shown to shoppers.
     specifications: Object.fromEntries(
-      Object.entries(raw.specs || matchedSeed?.specifications || {}).filter(([key]) => !key.startsWith('_')),
-    ),
+      (Object.entries(raw.specs || matchedSeed?.specifications || {}) as Array<[string, string]>).filter(
+        ([key]) => !key.startsWith('_'),
+      ),
+    ) as Record<string, string>,
     sizes: sizes.length > 0 ? sizes : matchedSeed?.sizes || ['S', 'M', 'L'],
     colors,
     variants,
