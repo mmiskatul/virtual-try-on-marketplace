@@ -7,6 +7,7 @@ import { useMounted } from '../../../hooks/useMounted';
 import { AccountLayoutShell } from '../../../components/account/AccountSidebar';
 import { EmptyState, SafeImage } from '../../../components/ui/States';
 import { Button } from '../../../components/ui/button';
+import { lineUnitPrice } from '../../../lib/pricing';
 
 export default function AccountOrdersPage() {
   const mounted = useMounted();
@@ -93,7 +94,7 @@ export default function AccountOrdersPage() {
                             <p className="text-stone-500">Size {item.size} × {item.quantity}</p>
                           </div>
                         </div>
-                        <span className="font-bold">৳{(item.product.price * item.quantity).toFixed(2)}</span>
+                        <span className="font-bold">৳{(lineUnitPrice(item) * item.quantity).toFixed(2)}</span>
                       </div>
                     ))}
                   </div>

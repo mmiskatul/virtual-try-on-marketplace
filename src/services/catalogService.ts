@@ -44,6 +44,12 @@ export interface DiscoveryFilterParams {
   limit?: number;
 }
 
+const COLOR_HEX: Record<string, string> = {
+  black: '#111827', white: '#ffffff', ivory: '#f5efe0', beige: '#d9c7a4', grey: '#9ca3af', gray: '#9ca3af',
+  navy: '#1e3a8a', blue: '#2563eb', green: '#16a34a', olive: '#6b7a2f', yellow: '#facc15', orange: '#f97316',
+  red: '#dc2626', maroon: '#7f1d1d', pink: '#ec4899', purple: '#7c3aed', brown: '#78350f',
+};
+
 export function normalizeBackendProduct(raw: any): MarketplaceProduct {
   const brandSlug =
     raw.brandSlug ||
@@ -85,13 +91,20 @@ export function normalizeBackendProduct(raw: any): MarketplaceProduct {
     )
   );
 
-  const colors = matchedSeed?.colors || [
-    {
-      name: variants[0]?.color || 'Charcoal',
-      hex: '#1C1917',
-      image: images[0],
-    },
-  ];
+  // The colour buttons come from the product's own variants, each with its own photo when the brand added one.
+  const colors =
+    matchedSeed?.colors ||
+    (() => {
+      const names: string[] = Array.from(
+        new Set<string>(variants.map((v: any) => v.color).filter((c: unknown): c is string => typeof c === 'string' && c.length > 0))
+      );
+      if (names.length === 0) names.push('Charcoal');
+      return names.map((name) => ({
+        name,
+        hex: COLOR_HEX[name.toLowerCase()] || '#9ca3af',
+        image: variants.find((v: any) => v.color === name && v.imageUrl)?.imageUrl || images[0],
+      }));
+    })();
 
   const compareAtPrice = raw.compareAtPrice ?? matchedSeed?.compareAtPrice;
   const price = Number(raw.price ?? matchedSeed?.price ?? 0);

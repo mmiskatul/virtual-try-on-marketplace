@@ -8,6 +8,7 @@ import { groupCartItemsByBrand } from '../../services';
 import { useCartStore } from '../../stores/useCartStore';
 import { SafeImage } from '../ui/States';
 import { Button } from '../ui/button';
+import { lineUnitPrice } from '../../lib/pricing';
 
 interface CartDrawerProps {
   isOpen?: boolean;
@@ -123,7 +124,7 @@ export function CartDrawer({ isOpen: propOpen, onClose: propClose }: CartDrawerP
                           </div>
 
                           <span className="text-xs font-extrabold text-stone-950">
-                            ${(item.product.price * item.quantity).toFixed(2)}
+                            ${(lineUnitPrice(item) * item.quantity).toFixed(2)}
                           </span>
                         </div>
                       </div>

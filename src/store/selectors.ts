@@ -1,5 +1,6 @@
 import { createSelector } from '@reduxjs/toolkit';
 import type { RootState } from './index';
+import { lineUnitPrice } from '../lib/pricing';
 
 export const selectCartState = (state: RootState) => state.cart;
 export const selectCustomerState = (state: RootState) => state.customer;
@@ -13,7 +14,7 @@ export const selectCartItemCount = createSelector(
 
 export const selectCartSubtotal = createSelector(
   [(state: RootState) => state.cart.items],
-  (items) => items.reduce((sum, item) => sum + item.product.price * item.quantity, 0)
+  (items) => items.reduce((sum, item) => sum + lineUnitPrice(item) * item.quantity, 0)
 );
 
 export const selectUnreadNotificationCount = createSelector(

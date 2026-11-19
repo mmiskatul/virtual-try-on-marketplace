@@ -26,6 +26,7 @@ import { Breadcrumb } from '../../../components/layout/Breadcrumb';
 import { ProductGrid } from '../../../components/modules/ProductGrid';
 import { EmptyState, ProductGridSkeleton, SafeImage } from '../../../components/ui/States';
 import { Button } from '../../../components/ui/button';
+import { variantUnitPrice } from '../../../lib/pricing';
 
 type DetailTab =
   | 'description'
@@ -287,8 +288,8 @@ export default function ProductDetailsPage() {
               </div>
 
               <div className="flex items-baseline gap-3 pt-1">
-                <span className="text-3xl font-extrabold text-stone-950">৳{product.price}</span>
-                {product.compareAtPrice && product.compareAtPrice > product.price && (
+                <span className="text-3xl font-extrabold text-stone-950">৳{variantUnitPrice(product, effectiveSize, effectiveColor)}</span>
+                {product.compareAtPrice && product.compareAtPrice > variantUnitPrice(product, effectiveSize, effectiveColor) && (
                   <>
                     <span className="text-base text-stone-400 line-through">৳{product.compareAtPrice}</span>
                     <span className="px-2.5 py-0.5 rounded-full bg-rose-100 text-rose-700 text-xs font-bold">

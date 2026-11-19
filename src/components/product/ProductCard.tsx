@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { Eye, Heart, ShoppingBag, Sparkles, Star, ShieldCheck } from 'lucide-react';
 import { MarketplaceProduct } from '../../types';
 import { SafeImage } from '../ui/States';
+import { priceRange } from '../../lib/pricing';
 
 interface ProductCardProps {
   product: MarketplaceProduct;
@@ -163,8 +164,10 @@ export function ProductCard({
         {/* Price + Quick Add */}
         <div className="pt-2.5 border-t border-stone-100 flex items-center justify-between gap-2">
           <div className="flex items-baseline gap-1.5">
-            <span className="text-base font-extrabold text-stone-950">৳{product.price}</span>
-            {product.compareAtPrice && product.compareAtPrice > product.price && (
+            <span className="text-base font-extrabold text-stone-950">
+              {priceRange(product).low < priceRange(product).high ? `From ৳${priceRange(product).low}` : `৳${product.price}`}
+            </span>
+            {product.compareAtPrice && product.compareAtPrice > product.price && priceRange(product).low === priceRange(product).high && (
               <span className="text-xs text-stone-400 line-through">৳{product.compareAtPrice}</span>
             )}
           </div>

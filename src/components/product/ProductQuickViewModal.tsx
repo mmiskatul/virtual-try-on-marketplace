@@ -6,6 +6,7 @@ import { CheckCircle, ShoppingBag, Sparkles, Star, X } from 'lucide-react';
 import { MarketplaceProduct } from '../../types';
 import { SafeImage } from '../ui/States';
 import { Button } from '../ui/button';
+import { variantUnitPrice } from '../../lib/pricing';
 
 interface ProductQuickViewModalProps {
   product: MarketplaceProduct | null;
@@ -76,8 +77,8 @@ export function ProductQuickViewModal({
             </div>
 
             <div className="flex items-baseline gap-2.5">
-              <span className="text-2xl font-extrabold text-stone-950">৳{product.price}</span>
-              {product.compareAtPrice && product.compareAtPrice > product.price && (
+              <span className="text-2xl font-extrabold text-stone-950">৳{variantUnitPrice(product, size, color)}</span>
+              {product.compareAtPrice && product.compareAtPrice > variantUnitPrice(product, size, color) && (
                 <>
                   <span className="text-sm text-stone-400 line-through">৳{product.compareAtPrice}</span>
                   <span className="text-xs font-bold text-rose-600">Save {product.discountPercent}%</span>

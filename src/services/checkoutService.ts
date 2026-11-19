@@ -1,5 +1,6 @@
 import { BrandCartGroup, CartItem, CustomerOrder, PaymentMethodId, PaymentMethodOption } from '../types';
 import { DEFAULT_PAYMENT_METHODS, SEED_BRANDS } from '../data/catalogSeed';
+import { lineUnitPrice } from '../lib/pricing';
 
 const API_BASE = process.env.NEXT_PUBLIC_BACKEND_API_URL || 'http://localhost:4000';
 const brandMetaMap = new Map(SEED_BRANDS.map((b) => [b.slug, b]));
@@ -14,7 +15,7 @@ export function groupCartItemsByBrand(items: CartItem[]): BrandCartGroup[] {
 
     if (existing) {
       existing.items.push(item);
-      existing.subtotal = Number((existing.subtotal + item.product.price * item.quantity).toFixed(2));
+      existing.subtotal = Number((existing.subtotal + lineUnitPrice(item) * item.quantity).toFixed(2));
     } else {
       map.set(slug, {
         brandId: item.product.brandId,
@@ -24,7 +25,7 @@ export function groupCartItemsByBrand(items: CartItem[]): BrandCartGroup[] {
         deliveryEstimate: brandMeta?.deliveryEstimate || '2–4 business days',
         returnPolicy: brandMeta?.returnPolicy || item.product.returnPolicy || '30-day returns',
         items: [item],
-        subtotal: Number((item.product.price * item.quantity).toFixed(2)),
+        subtotal: Number((lineUnitPrice(item) * item.quantity).toFixed(2)),
         shippingFee: 0,
       });
     }

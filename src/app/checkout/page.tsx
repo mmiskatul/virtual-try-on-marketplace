@@ -27,6 +27,7 @@ import { MarketplaceShell } from '../../components/layout/MarketplaceShell';
 import { Breadcrumb } from '../../components/layout/Breadcrumb';
 import { EmptyState, SafeImage } from '../../components/ui/States';
 import { Button } from '../../components/ui/button';
+import { lineUnitPrice } from '../../lib/pricing';
 
 type CheckoutStep = 1 | 2 | 3 | 4 | 5 | 6;
 
@@ -537,7 +538,7 @@ export default function CheckoutPage() {
                                 <p className="text-stone-500">Size {item.size} × {item.quantity}</p>
                               </div>
                             </div>
-                            <span className="font-bold">৳{(item.product.price * item.quantity).toFixed(2)}</span>
+                            <span className="font-bold">৳{(lineUnitPrice(item) * item.quantity).toFixed(2)}</span>
                           </div>
                         ))}
                       </div>

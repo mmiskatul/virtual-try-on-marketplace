@@ -15,6 +15,10 @@ export interface ProductVariant {
   color: string;
   stockQuantity: number;
   available: boolean;
+  /** Price for this size. When missing, the product price applies. */
+  price?: number;
+  /** Photo of this colour. */
+  imageUrl?: string;
 }
 
 export interface MarketplaceProduct {

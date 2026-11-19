@@ -19,6 +19,7 @@ import { MarketplaceShell } from '../../components/layout/MarketplaceShell';
 import { Breadcrumb } from '../../components/layout/Breadcrumb';
 import { EmptyState, SafeImage } from '../../components/ui/States';
 import { Button } from '../../components/ui/button';
+import { lineUnitPrice } from '../../lib/pricing';
 
 export default function CartPage() {
   const mounted = useMounted();
@@ -36,8 +37,9 @@ export default function CartPage() {
 
   const subtotal = groups.reduce((sum, g) => sum + g.subtotal, 0);
   const totalSavings = safeItems.reduce((sum, i) => {
-    const compare = i.product.compareAtPrice || i.product.price;
-    return sum + Math.max(0, compare - i.product.price) * i.quantity;
+    const unit = lineUnitPrice(i);
+    const compare = i.product.compareAtPrice || unit;
+    return sum + Math.max(0, compare - unit) * i.quantity;
   }, 0);
   const totalShipping = groups.reduce((sum, g) => sum + g.shippingFee, 0);
   const estimatedTotal = Number((subtotal + totalShipping).toFixed(2));
@@ -142,10 +144,10 @@ export default function CartPage() {
                               </p>
                               <div className="flex items-baseline gap-2 pt-0.5">
                                 <span className="text-sm font-extrabold text-stone-950">
-                                  ৳{item.product.price}
+                                  ৳{lineUnitPrice(item)}
                                 </span>
                                 {item.product.compareAtPrice &&
-                                  item.product.compareAtPrice > item.product.price && (
+                                  item.product.compareAtPrice > lineUnitPrice(item) && (
                                     <span className="text-xs text-stone-400 line-through">
                                       ৳{item.product.compareAtPrice}
                                     </span>
@@ -191,7 +193,7 @@ export default function CartPage() {
                             </div>
 
                             <span className="text-base font-extrabold text-stone-950">
-                              ${(item.product.price * item.quantity).toFixed(2)}
+                              ${(lineUnitPrice(item) * item.quantity).toFixed(2)}
                             </span>
                           </div>
                         </div>
@@ -266,7 +268,7 @@ export default function CartPage() {
                   <div className="flex-1 min-w-0 space-y-1">
                     <p className="text-[10px] font-bold uppercase text-stone-500">{s.product.brandName}</p>
                     <p className="text-xs font-bold text-stone-900 truncate">{s.product.name}</p>
-                    <p className="text-xs font-extrabold">৳{s.product.price}</p>
+                    <p className="text-xs font-extrabold">৳{lineUnitPrice(s)}</p>
                     <div className="flex gap-2 pt-1">
                       <button
                         type="button"

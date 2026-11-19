@@ -20,6 +20,7 @@ import { useTryOnStore } from '../../stores/useTryOnStore';
 import { BeforeAfterSlider } from './BeforeAfterSlider';
 import { SafeImage } from '../ui/States';
 import { Button } from '../ui/button';
+import { variantUnitPrice } from '../../lib/pricing';
 
 interface TryOnStudioModalProps {
   product: MarketplaceProduct | null;
@@ -174,7 +175,7 @@ export function TryOnStudioModal({
               </p>
               <p className="text-xs font-bold text-stone-950 truncate">{product.name}</p>
               <p className="text-xs text-stone-600 font-semibold mt-0.5">
-                ৳{product.price} • Size {size} • {color}
+                ৳{variantUnitPrice(product, size, color)} • Size {size} • {color}
               </p>
             </div>
           </div>
@@ -380,7 +381,7 @@ export function TryOnStudioModal({
                 }}
                 className="gap-1.5"
               >
-                <ShoppingBag className="w-3.5 h-3.5" /> Add to Cart • ${product.price}
+                <ShoppingBag className="w-3.5 h-3.5" /> Add to Cart • ৳{variantUnitPrice(product, size, color)}
               </Button>
             </div>
           </div>
