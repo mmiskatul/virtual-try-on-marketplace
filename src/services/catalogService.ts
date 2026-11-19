@@ -137,7 +137,10 @@ export function normalizeBackendProduct(raw: any): MarketplaceProduct {
     fabric: raw.fabric || matchedSeed?.fabric || raw.specs?.Material || 'Editorial Natural Fiber',
     materialDetails: matchedSeed?.materialDetails,
     fitNotes: matchedSeed?.fitNotes,
-    specifications: raw.specs || matchedSeed?.specifications || {},
+    // Keys starting with "_" are internal (e.g. the AI reference image) and never shown to shoppers.
+    specifications: Object.fromEntries(
+      Object.entries(raw.specs || matchedSeed?.specifications || {}).filter(([key]) => !key.startsWith('_')),
+    ),
     sizes: sizes.length > 0 ? sizes : matchedSeed?.sizes || ['S', 'M', 'L'],
     colors,
     variants,
