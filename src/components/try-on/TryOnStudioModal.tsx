@@ -17,6 +17,7 @@ import {
 import { MarketplaceProduct } from '../../types';
 import { PRESET_MODEL_PHOTOS } from '../../data/catalogSeed';
 import { executeVirtualTryOn, uploadCustomerTryOnPhoto } from '../../services';
+import { StyleChips } from './StyleChips';
 import { useMarketplaceStore } from '../../stores/useMarketplaceStore';
 import { useTryOnStore } from '../../stores/useTryOnStore';
 import { BeforeAfterSlider } from './BeforeAfterSlider';
@@ -62,6 +63,7 @@ export function TryOnStudioModal({
 
   const [size, setSize] = useState(product?.sizes?.[0] || 'M');
   const [color, setColor] = useState(product?.colors?.[0]?.name || 'Classic');
+  const [styleOptions, setStyleOptions] = useState<string[]>([]);
   const [uploadError, setUploadError] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
   const [cameraOpen, setCameraOpen] = useState(false);
@@ -107,6 +109,7 @@ export function TryOnStudioModal({
         garmentImage: activeColorImg,
         size,
         color,
+        styleOptions,
       });
 
       if (!outcome.success) {
@@ -322,6 +325,8 @@ export function TryOnStudioModal({
                 </div>
               </div>
             </div>
+
+            <StyleChips category={product.tryOnCategory} value={styleOptions} onChange={setStyleOptions} />
 
             {uploadError && (
               <p className="text-xs font-semibold text-rose-600 bg-rose-50 border border-rose-200 rounded-xl px-3 py-2">

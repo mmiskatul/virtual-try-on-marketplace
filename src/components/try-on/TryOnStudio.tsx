@@ -28,6 +28,7 @@ import { BeforeAfterSlider } from './BeforeAfterSlider';
 import { CameraCapture } from './CameraCapture';
 import { SafeImage } from '../ui/States';
 import { RealImage } from './RealImage';
+import { StyleChips } from './StyleChips';
 import { Button } from '../ui/button';
 
 interface TryOnStudioProps {
@@ -73,6 +74,7 @@ export function TryOnStudio({
 
   const [selectedSize, setSelectedSize] = useState<string>('M');
   const [selectedColor, setSelectedColor] = useState<string>('Classic');
+  const [styleOptions, setStyleOptions] = useState<string[]>([]);
 
   const [studioState, setStudioState] = useState<TryOnStudioState>('empty');
   const [uploadProgress, setUploadProgress] = useState<number>(0);
@@ -96,6 +98,7 @@ export function TryOnStudio({
     if (selectedProduct) {
       setSelectedSize(selectedProduct.sizes?.[0] || 'M');
       setSelectedColor(selectedProduct.colors?.[0]?.name || 'Classic');
+      setStyleOptions([]); // styling choices belong to one garment
     }
   }, [selectedProduct]);
 
@@ -169,6 +172,7 @@ export function TryOnStudio({
         garmentImage: activeColorImage,
         size: selectedSize,
         color: selectedColor,
+        styleOptions,
       });
 
       if (!outcome.success) {
@@ -554,6 +558,7 @@ export function TryOnStudio({
                     </button>
                   ))}
                 </div>
+                <StyleChips category={selectedProduct.tryOnCategory} value={styleOptions} onChange={setStyleOptions} />
               </div>
 
               <div className="grid grid-cols-2 gap-2 pt-1">
