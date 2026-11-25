@@ -8,7 +8,8 @@ import { useMarketplaceStore } from '../../../stores/useMarketplaceStore';
 import { useMounted } from '../../../hooks/useMounted';
 import { AccountLayoutShell } from '../../../components/account/AccountSidebar';
 import { BeforeAfterSlider } from '../../../components/try-on/BeforeAfterSlider';
-import { EmptyState, SafeImage } from '../../../components/ui/States';
+import { EmptyState } from '../../../components/ui/States';
+import { RealImage } from '../../../components/try-on/RealImage';
 import { Button } from '../../../components/ui/button';
 
 export default function TryOnHistoryPage() {
@@ -46,7 +47,7 @@ export default function TryOnHistoryPage() {
           {safeHistory.map((item) => (
             <div key={item.id} className="fashion-card rounded-2xl overflow-hidden flex flex-col justify-between">
               <div className="relative aspect-[3/4] bg-stone-100">
-                <SafeImage src={item.resultImageUrl} alt={item.productName} fill className="object-cover" />
+                <RealImage src={item.resultImageUrl} alt={item.productName} className="absolute inset-0 h-full w-full object-contain" />
                 <span
                   className={`absolute top-3 left-3 px-2.5 py-0.5 rounded-full text-[10px] font-bold ${
                     item.mode === 'live_ai'
