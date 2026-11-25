@@ -2,7 +2,9 @@
 
 import React, { useRef, useState } from 'react';
 import Link from 'next/link';
+import { CameraCapture } from './CameraCapture';
 import {
+  Camera,
   CheckCircle,
   ExternalLink,
   RefreshCw,
@@ -62,6 +64,7 @@ export function TryOnStudioModal({
   const [color, setColor] = useState(product?.colors?.[0]?.name || 'Classic');
   const [uploadError, setUploadError] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
+  const [cameraOpen, setCameraOpen] = useState(false);
 
   if (!product) return null;
 
@@ -71,7 +74,11 @@ export function TryOnStudioModal({
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (!file) return;
+    e.target.value = '';
+    if (file) await processFile(file);
+  };
+
+  const processFile = async (file: File) => {
     if (!preferences.photoConsentGranted) {
       setUploadError('Please confirm photo processing consent before uploading your photo.');
       return;
@@ -248,15 +255,30 @@ export function TryOnStudioModal({
             />
 
             {/* Active Photo Preview / Uploader */}
+            <CameraCapture open={cameraOpen} onClose={() => setCameraOpen(false)} onCapture={(f) => void processFile(f)} />
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 items-center">
-              <div
-                onClick={() => fileInputRef.current?.click()}
-                className="border-2 border-dashed border-stone-300 hover:border-stone-950 rounded-2xl p-5 text-center cursor-pointer bg-stone-50 transition-colors space-y-2"
-              >
-                <Upload className="w-6 h-6 mx-auto text-stone-700" />
+              <div className="border-2 border-dashed border-stone-300 rounded-2xl p-5 text-center bg-stone-50 space-y-3">
                 <p className="text-xs font-bold text-stone-900">
-                  {uploading ? 'Uploading photo...' : 'Upload Your Photo'}
+                  {uploading ? 'Uploading photo...' : 'Add Your Photo'}
                 </p>
+                <div className="flex justify-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => fileInputRef.current?.click()}
+                    disabled={uploading}
+                    className="inline-flex items-center gap-1.5 rounded-full bg-stone-950 px-4 py-2 text-xs font-bold text-white disabled:opacity-60"
+                  >
+                    <Upload className="w-3.5 h-3.5" /> Upload
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setCameraOpen(true)}
+                    disabled={uploading}
+                    className="inline-flex items-center gap-1.5 rounded-full border border-stone-300 bg-white px-4 py-2 text-xs font-bold text-stone-900 disabled:opacity-60"
+                  >
+                    <Camera className="w-3.5 h-3.5" /> Take photo
+                  </button>
+                </div>
                 <p className="text-[11px] text-stone-500">
                   Front-facing, clear lighting, unobstructed garment area (JPG/PNG up to 10MB).
                 </p>

@@ -25,6 +25,7 @@ import {
 import { useCartStore } from '../../stores/useCartStore';
 import { useMarketplaceStore } from '../../stores/useMarketplaceStore';
 import { BeforeAfterSlider } from './BeforeAfterSlider';
+import { CameraCapture } from './CameraCapture';
 import { SafeImage } from '../ui/States';
 import { Button } from '../ui/button';
 
@@ -43,6 +44,7 @@ export function TryOnStudio({
   scopedBrandSlug,
 }: TryOnStudioProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [cameraOpen, setCameraOpen] = useState(false);
   const addToCart = useCartStore((s) => s.addToCart);
   const savedPhotos = useMarketplaceStore((s) => s.savedPhotos);
   const addSavedPhoto = useMarketplaceStore((s) => s.addSavedPhoto);
@@ -304,6 +306,15 @@ export function TryOnStudio({
               </div>
             )}
           </div>
+
+          <button
+            type="button"
+            onClick={() => setCameraOpen(true)}
+            className="w-full inline-flex items-center justify-center gap-2 rounded-full border border-stone-300 bg-white py-2.5 text-xs font-bold text-stone-900 hover:border-stone-900"
+          >
+            <Camera className="w-4 h-4" /> Or take a photo with your camera
+          </button>
+          <CameraCapture open={cameraOpen} onClose={() => setCameraOpen(false)} onCapture={(f) => void handlePhotoUpload(f)} />
 
           {errorMsg && (
             <div className="p-3 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 text-xs flex items-start gap-2">
