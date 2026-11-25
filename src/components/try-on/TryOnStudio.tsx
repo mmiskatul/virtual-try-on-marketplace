@@ -27,6 +27,7 @@ import { useMarketplaceStore } from '../../stores/useMarketplaceStore';
 import { BeforeAfterSlider } from './BeforeAfterSlider';
 import { CameraCapture } from './CameraCapture';
 import { SafeImage } from '../ui/States';
+import { RealImage } from './RealImage';
 import { Button } from '../ui/button';
 
 interface TryOnStudioProps {
@@ -169,6 +170,12 @@ export function TryOnStudio({
         size: selectedSize,
         color: selectedColor,
       });
+
+      if (!outcome.success) {
+        setStudioState('failed');
+        setErrorMsg(outcome.notice || 'The try-on could not be created. Please try again.');
+        return;
+      }
 
       setResultUrl(outcome.resultImageUrl);
       setResultMode(outcome.mode);
@@ -398,14 +405,8 @@ export function TryOnStudio({
           <div className="flex items-center justify-between">
             <h2 className="font-serif text-lg font-bold text-stone-950">2. Fitting Canvas</h2>
             {studioState === 'success' && (
-              <span
-                className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold ${
-                  resultMode === 'live_ai'
-                    ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
-                    : 'bg-amber-50 text-amber-800 border border-amber-200'
-                }`}
-              >
-                {resultMode === 'live_ai' ? 'Live AI Synthesis' : 'Demo Preview'}
+              <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                Live AI Synthesis
               </span>
             )}
           </div>
@@ -430,13 +431,13 @@ export function TryOnStudio({
               )}
               <BeforeAfterSlider
                 beforeUrl={personPhoto}
-                afterUrl={resultUrl || activeColorImage}
+                afterUrl={resultUrl}
                 beforeLabel="Original"
                 afterLabel="Virtual Fit"
               />
               <div className="grid grid-cols-2 gap-2.5">
                 <a
-                  href={resultUrl || activeColorImage}
+                  href={resultUrl}
                   download={`vtry-${selectedProduct?.slug || 'look'}.jpg`}
                   target="_blank"
                   rel="noreferrer"
@@ -467,9 +468,9 @@ export function TryOnStudio({
           )}
 
           {studioState !== 'processing' && studioState !== 'success' && studioState !== 'failed' && (
-            <div className="aspect-[3/4] rounded-2xl bg-stone-100 border border-stone-200 overflow-hidden relative flex items-center justify-center">
+            <div className={`rounded-2xl bg-stone-100 border border-stone-200 overflow-hidden relative flex items-center justify-center ${personPhoto ? '' : 'aspect-[3/4]'}`}>
               {personPhoto ? (
-                <SafeImage src={personPhoto} alt="Uploaded customer preview" fill className="object-cover" />
+                <RealImage src={personPhoto} alt="Uploaded customer preview" className="block w-full h-auto max-h-[78vh] object-contain" />
               ) : (
                 <div className="text-center p-6 space-y-2 max-w-xs">
                   <Sparkles className="w-9 h-9 text-stone-400 mx-auto" />

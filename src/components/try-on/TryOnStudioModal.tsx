@@ -109,6 +109,12 @@ export function TryOnStudioModal({
         color,
       });
 
+      if (!outcome.success) {
+        setUploadError(outcome.notice || 'The try-on could not be created. Please try again.');
+        setTryOnPhase('error');
+        return;
+      }
+
       setResultImageUrl(outcome.resultImageUrl, outcome.mode, outcome.notice || null);
       addTryOnRecord({
         id: outcome.jobId,
@@ -348,7 +354,7 @@ export function TryOnStudioModal({
             <div>
               <h4 className="font-bold text-sm text-stone-900">Try-On Generation Interrupted</h4>
               <p className="text-xs text-stone-500 mt-1">
-                We couldn&apos;t complete this generation right now. Please retry with another photo or studio model.
+                {uploadError || 'We couldn\'t complete this generation right now.'} You can retry, or change the photo.
               </p>
             </div>
             <div className="flex justify-center gap-3">
@@ -365,14 +371,8 @@ export function TryOnStudioModal({
         {phase === 'result' && (
           <div className="space-y-4">
             <div className="flex items-center justify-between flex-wrap gap-2">
-              <span
-                className={`px-3 py-1 rounded-full text-[11px] font-bold ${
-                  resultMode === 'live_ai'
-                    ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
-                    : 'bg-amber-50 text-amber-800 border border-amber-200'
-                }`}
-              >
-                {resultMode === 'live_ai' ? 'Live AI Synthesis Complete' : 'Demo Preview Mode'}
+              <span className="px-3 py-1 rounded-full text-[11px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                Live AI Synthesis Complete
               </span>
               <span className="text-[11px] text-stone-500">Drag slider to compare fit & drape</span>
             </div>
@@ -386,7 +386,7 @@ export function TryOnStudioModal({
             <div className="max-w-sm mx-auto">
               <BeforeAfterSlider
                 beforeUrl={activePhoto}
-                afterUrl={resultImg || activeColorImg}
+                afterUrl={resultImg}
                 beforeLabel="Original"
                 afterLabel="Virtual Fit"
               />

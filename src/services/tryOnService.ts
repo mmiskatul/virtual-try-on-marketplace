@@ -94,10 +94,21 @@ export async function uploadCustomerTryOnPhoto(file: File): Promise<{
   return { ok: true, url: dataUrl, provider: 'local_browser' };
 }
 
+/** Image generation can take a minute or more (the backend may try a second AI service), so wait for it. */
+const TRY_ON_TIMEOUT_MS = 120_000;
+
+const failure = (message: string): TryOnGenerationOutcome => ({
+  success: false,
+  mode: 'live_ai',
+  resultImageUrl: '',
+  jobId: '',
+  notice: message,
+});
+
 /**
- * Runs Virtual Try-On against backend + Docker AI service when connected & published.
- * Never fabricates live AI output: explicitly labels Demo Preview Mode when backend is
- * unreachable or garment is storefront/seed-only.
+ * Runs Virtual Try-On on the backend and waits for the finished picture.
+ * It never shows a stand-in picture: when the picture cannot be made, it returns success: false with the reason,
+ * so the shopper sees a clear message and can try again instead of a photo of the garment that looks like a result.
  */
 export async function executeVirtualTryOn(params: {
   product: MarketplaceProduct;
@@ -110,7 +121,7 @@ export async function executeVirtualTryOn(params: {
 
   try {
     const controller = new AbortController();
-    const timer = setTimeout(() => controller.abort(), 20000);
+    const timer = setTimeout(() => controller.abort(), TRY_ON_TIMEOUT_MS);
     const res = await marketplaceFetch(`${API_BASE}/api/v1/try-on/direct`, {
       method: 'POST',
       headers: {
@@ -126,36 +137,32 @@ export async function executeVirtualTryOn(params: {
     });
     clearTimeout(timer);
 
-    if (res.ok) {
-      const data = await res.json();
-      const resultUrl =
-        data.resultUrl ||
-        data.output_url ||
-        data.outputImageUrl ||
-        data.result?.output_url;
-
-      if (resultUrl) {
-        return {
-          success: true,
-          mode: 'live_ai',
-          resultImageUrl: resultUrl,
-          jobId: data.jobId || data.job_id || `live_${Date.now()}`,
-        };
-      }
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      const reason =
+        typeof data?.message === 'string' && data.message
+          ? data.message
+          : res.status === 503
+            ? 'Virtual try-on is not set up yet. Please try again later.'
+            : 'The try-on could not be created. Please try again.';
+      return failure(reason);
     }
-  } catch {
-    // Network / Docker AI unreachable — proceed explicitly to labeled Demo Preview fallback
+
+    const resultUrl = data.resultUrl || data.output_url || data.outputImageUrl || data.result?.output_url;
+    if (resultUrl) {
+      return {
+        success: true,
+        mode: 'live_ai',
+        resultImageUrl: resultUrl,
+        jobId: data.jobId || data.job_id || `live_${Date.now()}`,
+      };
+    }
+    return failure('The try-on finished but no picture came back. Please try again.');
+  } catch (err: unknown) {
+    const name = (err as { name?: string })?.name;
+    if (name === 'AbortError') {
+      return failure('The picture is taking longer than usual. Please try again in a moment.');
+    }
+    return failure('Could not reach the try-on service. Check your connection and try again.');
   }
-
-  // Clearly labeled Demo Preview simulation — never disguised as live neural inference
-  await new Promise((r) => setTimeout(r, 900));
-  return {
-    success: true,
-    mode: 'demo_preview',
-    resultImageUrl: garmentImage || product.image,
-    jobId: `demo_${Date.now()}`,
-    notice:
-      'Demo Preview Mode: Live AI backend did not process this catalog item (preview-only garment or service paused). Showing garment studio visualization.',
-  };
 }
-

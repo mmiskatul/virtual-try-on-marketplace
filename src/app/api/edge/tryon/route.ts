@@ -27,7 +27,7 @@ export async function POST(request: NextRequest) {
 
     try {
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 15000);
+      const timeoutId = setTimeout(() => controller.abort(), 110000); // image generation can take a minute or more
 
       const incomingCookie = request.headers.get('cookie');
       // Route through backend: triggers AI generation and automatic Cloudinary upload
@@ -58,19 +58,28 @@ export async function POST(request: NextRequest) {
     }
 
     const durationMs = Date.now() - startTime;
-    const jobId = jobResult?.job_id || `edge_vton_${Date.now()}`;
+    const jobId = jobResult?.job_id || jobResult?.jobId || `edge_vton_${Date.now()}`;
+    const outputImageUrl =
+      jobResult?.output_image_url ||
+      jobResult?.resultUrl ||
+      jobResult?.result?.output_url ||
+      '';
+
+    // Never answer with a stand-in picture: if no real result came back, say so.
+    if (!outputImageUrl) {
+      return NextResponse.json(
+        { success: false, jobId, error: 'The try-on picture could not be created. Please try again.' },
+        { status: 502 }
+      );
+    }
 
     return NextResponse.json(
       {
         success: true,
         jobId,
-        status: jobResult?.status || 'QUEUED',
+        status: jobResult?.status || 'COMPLETED',
         clothType: clothType || 'upper_body',
-        outputImageUrl:
-          jobResult?.output_image_url ||
-          jobResult?.resultUrl ||
-          jobResult?.result?.output_url ||
-          'https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?w=800&auto=format&fit=crop&q=80',
+        outputImageUrl,
         edgeTelemetry: {
           dispatchedAtEdge: true,
           durationMs,
