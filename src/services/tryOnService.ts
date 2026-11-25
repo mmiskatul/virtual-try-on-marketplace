@@ -116,6 +116,8 @@ export async function executeVirtualTryOn(params: {
   garmentImage: string;
   size?: string;
   color?: string;
+  /** Optional styling choices such as tucked_in or sleeves_rolled. They ride along in the same request. */
+  styleOptions?: string[];
 }): Promise<TryOnGenerationOutcome> {
   const { product, personImage, garmentImage } = params;
 
@@ -132,6 +134,9 @@ export async function executeVirtualTryOn(params: {
         personImage,
         garmentImage,
         category: product.tryOnCategory || 'tops',
+        // The colour the shopper picked, so the picture instruction can name it.
+        ...(params.color ? { color: params.color } : {}),
+        ...(params.styleOptions?.length ? { styleOptions: params.styleOptions } : {}),
       }),
       signal: controller.signal,
     });
